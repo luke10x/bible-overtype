@@ -27,6 +27,8 @@ int get_padding(int longest_line, int term_cols);
 
 void print_grey(const int row, const int col, const char *line);
 
+size_t smartlen(const char *line);
+
 void re_type(const int row, const int col, const char *line,
              const int offset, const struct winsize w);
 static void sig_handler(int sig);
@@ -254,12 +256,8 @@ void re_type(const int row, const int col, const char *line,
             // // int len = wcstombs( pmb, line, MB_CUR_MAX);
             // mbstowcs( pwcs, line, MB_CUR_MAX);
 
-            int i = 0;
-            while (simplify(line, i) != 0) {
-                i++;
-            }
-
-
+            const size_t i = smartlen(line);
+            
             fwprintf(stderr, L"smart length: %zu\n", i);
             if (typed < i || undostack != NULL) {
                 continue;
@@ -318,8 +316,10 @@ void re_type(const int row, const int col, const char *line,
             prefresh(pad, offset, 0, 0, 0, w.ws_row - 1, w.ws_col - 1);
             typed++;
         } else {
+
+            const wint_t good_ch = (typed < smartlen(line)) ? expected_ch : ' ';
             struct charstack *nptr = malloc(sizeof(struct charstack));
-            nptr->ch = expected_ch;
+            nptr->ch = good_ch;
             nptr->next = undostack;
             undostack = nptr;
 
@@ -339,6 +339,14 @@ void re_type(const int row, const int col, const char *line,
         }
     }
     while (true);
+}
+
+size_t smartlen(const char *line) {
+    size_t i = 0;
+    while (simplify(line, i) != 0) {
+        i++;
+    }
+    return i;
 }
 
 static void sig_handler(int sig)
