@@ -241,7 +241,6 @@ void re_type(const int row, const int col, const char *line,
             endwin();
             exit(0);
         }
-
         // ENTER key
         if (typed_ch == 13) {
 
@@ -262,7 +261,7 @@ void re_type(const int row, const int col, const char *line,
 
 
             fwprintf(stderr, L"smart length: %zu\n", i);
-            if (typed < i) {
+            if (typed < i || undostack != NULL) {
                 continue;
             }
             break;
@@ -351,4 +350,4 @@ static void sig_handler(int sig)
         printf("SIGWINCH raised, window size: %d rows / %d columns\n",
                winsz.ws_row, winsz.ws_col);
     }
-} 
+}
