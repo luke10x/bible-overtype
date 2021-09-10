@@ -15,6 +15,7 @@
 #include <inttypes.h>
 #include <wchar.h>
 
+#include <unistr.h>
 #include <uniconv.h>
 
 #define GREY_PAIR    5
@@ -27,13 +28,21 @@ int get_padding(int longest_line, int term_cols);
 
 void print_grey(const int row, const int col, const char *line);
 
-size_t smartlen(const char *line);
-
 void re_type(const int row, const int col, const char *line,
              const int offset, const struct winsize w);
 static void sig_handler(int sig);
 
 WINDOW *pad;
+
+size_t smartlen(const char *line)
+{
+    size_t len = 0;
+    ucs4_t _;
+    for (const uint8_t * it = (const uint8_t *)line; it; it = u8_next(&_, it))
+        len++;
+    len--;                      // Because it is NUL terminated string
+    return len;
+}
 
 int main(void)
 {
@@ -257,8 +266,8 @@ void re_type(const int row, const int col, const char *line,
             // mbstowcs( pwcs, line, MB_CUR_MAX);
 
             const size_t i = smartlen(line);
-            
-            fwprintf(stderr, L"smart length: %zu\n", i);
+
+            fwprintf(stderr, L"smarte length: %zu\n", i);
             if (typed < i || undostack != NULL) {
                 continue;
             }
@@ -339,14 +348,6 @@ void re_type(const int row, const int col, const char *line,
         }
     }
     while (true);
-}
-
-size_t smartlen(const char *line) {
-    size_t i = 0;
-    while (simplify(line, i) != 0) {
-        i++;
-    }
-    return i;
 }
 
 static void sig_handler(int sig)
