@@ -15,8 +15,12 @@
 #include <inttypes.h>
 #include <wchar.h>
 
-#include <unistr.h>
+#include <unitypes.h>
 #include <uniconv.h>
+#include <unistdio.h>
+#include <unistr.h>
+#include <uniwidth.h>
+#include <utf8proc.h>
 
 #define GREY_PAIR    5
 #define GOOD_PAIR    6
@@ -50,9 +54,6 @@ int main(void)
 
     int longest_line = 0;
 
-    /*
-     * int lines_total = 0; 
-     */
     char ch_arr[MAX_LEN][MAX_LEN];
 
     FILE *fp;
@@ -69,9 +70,6 @@ int main(void)
     while (fgets(buffer, MAX_LEN - 1, fp)) {
         // Remove trailing newline
         buffer[strcspn(buffer, "\n")] = 0;
-        /*
-         * printf("%d %s\n", i, buffer); 
-         */
         strcpy(ch_arr[i], buffer);
         i++;
 
@@ -142,7 +140,6 @@ int main(void)
     const double diff_t = difftime(end_time, start_time);
     printf("Execution time = %f\n", diff_t);
 
-
     getch();
     endwin();
     exit(0);
@@ -167,61 +164,42 @@ struct charstack {
     struct charstack *next;
 };
 
-
 typedef uint8_t utf8_t;
 
-int isssame(const int expected_ch, const int ch)
+uint8_t normalize(const uint32_t c)
 {
-    fwprintf(stderr, L"%d == %d \n", expected_ch, ch);
+    uint8_t *output;
 
-    if (expected_ch == ch) {
-        return TRUE;
-    }
-    return FALSE;
-    // printf("", testch);
-    // utf8_t *output;
-    // ssize_t len = 
+    char *input_ = malloc(sizeof(const uint32_t) + 1);
+    sprintf(input_, "%lc", c);
 
-    // int input = wcval;
+    const int first_ch_size = strlen(input_);   //u8_mblen(&c, sizeof(uint32_t));
 
+    utf8proc_map((unsigned char *) input_, first_ch_size, &output,
+                 UTF8PROC_DECOMPOSE | UTF8PROC_NULLTERM | UTF8PROC_STABLE |
+                 UTF8PROC_STRIPMARK | UTF8PROC_CASEFOLD);
 
-    // utf8proc_map((uint8_t*)&wcval, 0, &output, 
-    // UTF8PROC_NULLTERM | UTF8PROC_STABLE |
-    // UTF8PROC_STRIPMARK | UTF8PROC_DECOMPOSE |
-    // UTF8PROC_CASEFOLD
-    // );
-    // fprintf(stderr, "SHE is output [%s]\n", output);
-
-    // if (testch == *output) {
-    // return TRUE;
-    // }
-    // return FALSE; 
+    return *output;
 }
 
-int simplify(const char *line, const int index)
+int isssame(const uint32_t expected_ch, const int typed_ch)
 {
-    const uint32_t *mbcs = u32_strconv_from_locale(line);
-    // fwprintf(stderr, L"HI %d\n", mbcs[0]);
-    // fwprintf(stderr, L"HI %s\n", unicode_to_utf8(mbcs[1]));
-    // fwprintf(stderr, L"HI %d\n", mbcs[2]);
-    // fwprintf(stderr, L"HI %d\n", mbcs[3]);
-    // fwprintf(stderr, L"HI %d\n", mbcs[4]);
+    uint8_t expected_nch = normalize(expected_ch);
+    uint8_t typed_nch = normalize(typed_ch);
 
+    fwprintf(stderr, L"%lc:%d(%d) == %lc:%d(%d) \n",
+             expected_ch, expected_ch, expected_nch,
+             typed_ch, typed_ch, typed_nch);
 
-    // unsigned char *output = malloc(8000) ;
+    return (expected_nch == typed_nch);
+}
 
-    // utf8proc_map((const unsigned char *)(&mbcs[index]), strlen(line),
-    // &output, 
-    // UTF8PROC_NULLTERM | UTF8PROC_STABLE |
-    // UTF8PROC_STRIPMARK | UTF8PROC_DECOMPOSE | UTF8PROC_STRIPMARK |
-    // UTF8PROC_CASEFOLD);
+const uint32_t simplify(const char *input, const int index)
+{
+    const uint32_t *mbcs = u32_strconv_from_locale(input);
 
-    const int unicode = (int) *(&mbcs[index]);
-    // fwprintf(stderr, L"%d. input: %ls(%d) Output: %ls(%d)\n", index,
-    // origch, (int)*(&mbcs[index]), output, *output);
-    // fwprintf(stderr, L"%d. (%d)\n", index, unicode);
+    const uint32_t unicode = (int) *(&mbcs[index]);
     return unicode;
-
 }
 
 void re_type(const int row, const int col, const char *line,
@@ -234,18 +212,7 @@ void re_type(const int row, const int col, const char *line,
 
     int typed = 0;
     do {
-        // char ch;
         wint_t typed_ch = getwchar();
-
-        // endwin();
-        // printf("The iddnteger is: %d\n",(int) ch);
-        // putwchar(ch);
-
-        // ch = ungetwc(ch, stdin);
-        // ch = getch();
-        // printf( "%d\n - UNPRESSED\n", ch);
-        // getch();
-        // exit(1);
 
         // ANY control char
         if (typed_ch == 27) {
@@ -257,13 +224,6 @@ void re_type(const int row, const int col, const char *line,
 
             fwprintf(stderr, L"typed: %d\n", typed);
             fwprintf(stderr, L"normal length: %zu\n", strlen(line));
-
-            // char *pmb = (char *)malloc( MB_CUR_MAX );
-            // wchar_t *pwcs = (wchar_t *)malloc( sizeof( wchar_t ));
-
-
-            // // int len = wcstombs( pmb, line, MB_CUR_MAX);
-            // mbstowcs( pwcs, line, MB_CUR_MAX);
 
             const size_t i = smartlen(line);
 
@@ -291,7 +251,6 @@ void re_type(const int row, const int col, const char *line,
             waddch(pad, temp->ch);
             wattroff(pad, COLOR_PAIR(GREY_PAIR));
 
-
             typed--;
 
             // Again we need to go back 
@@ -302,28 +261,25 @@ void re_type(const int row, const int col, const char *line,
             continue;
         }
 
-        int expected_ch = simplify(line, typed);
+        const uint32_t expected_ch = simplify(line, typed);
         // fwprintf(stderr, L"%d. %lsc(%d) TEST: %ls(%d)\n", typed,
         // expected_ch, (int)expected_ch);
-        fwprintf(stderr, L"%d. TEST:(%d) \n", typed, expected_ch);
+        fwprintf(stderr, L"----- \n");
+        fwprintf(stderr, L"%d. TEST %lc(%d) \n", typed, expected_ch,
+                 expected_ch);
 
         const int same = isssame(expected_ch, typed_ch);
         // const char testch = winch(pad) & A_CHARTEXT;
         if (same && undostack == NULL) {
-            wattron(pad, COLOR_PAIR(GOOD_PAIR));
-            // waddnstr(pad, (const char *)&typed_ch, sizeof(wint_t));
-            // sputwchar(typed_ch);
-            // waddstr(pad, wsprintf(L"%lc", expected_ch));
 
+            wattron(pad, COLOR_PAIR(GOOD_PAIR));
             char str[80];
             sprintf(str, "%lc", expected_ch);
             waddstr(pad, str);
-
             wattroff(pad, COLOR_PAIR(GOOD_PAIR));
 
             refresh();
             prefresh(pad, offset, 0, 0, 0, w.ws_row - 1, w.ws_col - 1);
-            typed++;
         } else {
 
             const wint_t good_ch = (typed < smartlen(line)) ? expected_ch : ' ';
@@ -333,19 +289,15 @@ void re_type(const int row, const int col, const char *line,
             undostack = nptr;
 
             wattron(pad, COLOR_PAIR(ERROR_PAIR));
-
             char str[80];
             sprintf(str, "%lc", typed_ch);
             waddstr(pad, str);
-
-            // waddch(pad, typed_ch);
-
             wattroff(pad, COLOR_PAIR(ERROR_PAIR));
 
-            typed++;
             refresh();
             prefresh(pad, offset, 0, 0, 0, w.ws_row - 1, w.ws_col - 1);
         }
+        typed++;
     }
     while (true);
 }
