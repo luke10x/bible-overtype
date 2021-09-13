@@ -1,0 +1,44 @@
+#!/usr/bin/env python3
+# https://en.wikipedia.org/wiki/Chapters_and_verses_of_the_Bible#Chapters
+
+from simple_term_menu import TerminalMenu
+import subprocess
+import os
+
+books = [
+    {
+        "title": "Genesis",
+        "hotkey": "g",
+        "chapters": [
+            (1, 4, 103),
+            (2, 104, 180),
+            (3, 181, 253),
+            (4, 254, 334),
+            (5, 335, 395),
+            (6, 396, 470),
+        ]
+    },
+    {
+        "title": "Exodus",
+        "hotkey": "e",
+        "chapters"  : []
+    }
+]
+
+def main():
+    mainopts = list(map(lambda x: "[{}] {}".format(x["hotkey"], x["title"]), books))
+    book_menu = TerminalMenu(mainopts)
+    print("Select book:")
+    selected_mainopts_index = book_menu.show()
+    print(f"Book '{books[selected_mainopts_index]['title']}' selected!")
+    chapters = books[selected_mainopts_index]["chapters"]
+    chapteropts = ["[{}] ".format(x) for x in range(1, len(chapters)+1)]
+    print("Select chapter:")
+    chapter_menu = TerminalMenu(chapteropts)
+    selected_chapteropts_index = chapter_menu.show()
+    (chapter, start, end) = chapters[selected_chapteropts_index]
+    print(f"Chapter {chapter} selected!")
+    os.system("cat resources/the-king-james-bible.txt | sed -n '{},{}p' | ./retype".format(start, end))
+
+if __name__ == "__main__":
+    main()
