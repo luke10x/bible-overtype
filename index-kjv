@@ -1,0 +1,95 @@
+#!/usr/bin/env python3
+# https://en.wikipedia.org/wiki/Chapters_and_verses_of_the_Bible#Chapters
+
+from ctypes import *
+from ctypes import cdll, c_int, c_float, create_string_buffer, byref
+import subprocess
+import os
+import re
+
+filename = "resources/the-king-james-bible.txt"
+
+file = open(filename, "rb")
+SCANNING = 1
+BUILDING_CHAPTER = 2
+BUILDING_VERSE = 4
+BUILDING_REST = 5
+FINISHED = 6
+
+def is_number(byte):
+    return b'0' <= byte <= b'9'
+
+def is_colon(byte):
+    return byte == b':'
+
+def is_new_line(byte):
+    return byte == b'\n'
+
+class Verse:
+    def __init__(self):
+        self.state = SCANNING
+        self.buf = b''
+    def accept(self, i, byte):
+        if self.state == SCANNING:
+            if (is_number(byte)):
+                self.state = BUILDING_CHAPTER
+                self.start = i 
+        if self.state == BUILDING_CHAPTER:
+            if (is_number(byte)):
+                self.buf = self.buf + byte
+            elif is_colon(byte):
+                self.buf = self.buf + byte
+                self.state = BUILDING_VERSE
+                return
+            else:
+                self.drop()
+        if self.state == BUILDING_VERSE:
+            if (is_number(byte)):
+                self.buf = self.buf + byte
+            else:
+                last = (self.buf[-1]).to_bytes(1, byteorder='big')
+                if is_number(last):
+                    self.verse = self.buf
+                    self.state = BUILDING_REST
+                else:
+                    self.drop
+        if self.state == BUILDING_REST:
+            last = (self.buf[-1]).to_bytes(1, byteorder='big')    
+            if is_new_line(byte) and is_new_line(last):                
+                self.state = FINISHED
+                self.end = i
+            else:
+                self.buf = self.buf + byte
+    def drop(self):
+
+        self.state = SCANNING
+        self.buf = b''
+    def is_finished(self):
+        return self.state == FINISHED
+    
+verses = []
+with open(filename, "rb") as f:
+    byte = f.read(1)
+    i = 0
+    verse = Verse()
+    while 1:
+        
+        # Do stuff with byte.
+        byte = f.read(1)
+        verse.accept(i, byte)
+        if verse.is_finished():
+            verses.append(verse)
+            verse = Verse()
+            
+        if i > 10000:
+            print("too much")
+            print(verse.state)
+            print(verse.buf)
+            break
+        if byte == b"":
+            exit(0)
+        i = i + 1
+
+for v in verses:
+    print(f"{v.verse} {v.start}-{v.end} {v.buf}")
+    
