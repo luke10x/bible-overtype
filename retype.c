@@ -285,8 +285,7 @@ void re_type(const int row, const int col, const char *line,
         }
         // ANY control char
         if (typed_ch == 27) {
-            endwin();
-            exit(0);
+            continue;
         }
         // ENTER key
         if (typed_ch == 13) {
