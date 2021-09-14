@@ -25,10 +25,14 @@ def is_colon(byte):
 def is_new_line(byte):
     return byte == b'\n'
 
+def int2byte(intik):
+    return intik.to_bytes(1, byteorder='big')
+
 class Verse:
     def __init__(self):
         self.state = SCANNING
         self.buf = b''
+        self.next = None
     def accept(self, i, byte):
         if self.state == SCANNING:
             if (is_number(byte)):
@@ -54,42 +58,74 @@ class Verse:
                 else:
                     self.drop
         if self.state == BUILDING_REST:
-            last = (self.buf[-1]).to_bytes(1, byteorder='big')    
+            last = (self.buf[-1]).to_bytes(1, byteorder='big')
+
+            if is_number(byte):
+                if self.next is None:
+                    self.next = Verse()
+
+            if self.next is not None:
+                self.next.accept(i, byte)
+                if self.next.is_valid():
+                    self.end = self.next.start - 1
+                    excess_chars = len(self.next.buf)
+                    self.buf = self.buf[:-excess_chars]
+                    self.state = FINISHED
+
             if is_new_line(byte) and is_new_line(last):                
                 self.state = FINISHED
                 self.end = i
             else:
                 self.buf = self.buf + byte
-    def drop(self):
 
+    def drop(self):
         self.state = SCANNING
         self.buf = b''
+
     def is_finished(self):
         return self.state == FINISHED
     
-verses = []
-with open(filename, "rb") as f:
-    byte = f.read(1)
+    def is_valid(self):
+        return self.state == BUILDING_REST
+
+def from_file_byte_yielder(filename):
+    with open(filename, "rb") as f:
+        while 1: 
+            byte = f.read(1)
+            if byte == b"":
+                yield b""
+            yield byte
+
+def get_lines(yi):
     i = 0
     verse = Verse()
-    while 1:
-        
-        # Do stuff with byte.
-        byte = f.read(1)
+    lines = []
+    for byte in yi:
         verse.accept(i, byte)
+
         if verse.is_finished():
-            verses.append(verse)
-            verse = Verse()
             
-        if i > 10000:
+            next = verse.next
+                
+            lines.append(verse)
+            if next is not None:
+                verse = verse.next
+            else:
+                # v = verse
+                # print(f"{v.verse} {v.start}-{v.end} {v.buf}")
+                verse = Verse()
+            
+        if i > 10800:
             print("too much")
-            print(verse.state)
-            print(verse.buf)
             break
         if byte == b"":
+            print("oi we exit to terly")
             exit(0)
         i = i + 1
+    return lines
 
-for v in verses:
-    print(f"{v.verse} {v.start}-{v.end} {v.buf}")
+
+lines = get_lines(from_file_byte_yielder(filename))
+for l in lines:
+    print(f"{l.verse} {l.start}-{l.end} {l.buf}")
     
