@@ -8,7 +8,6 @@ import os
 books = [
     {
         "title": "Genesis",
-        "hotkey": "g",
         "chapters": [
             ( 1,  4,    103),
             ( 2,  104,  180),
@@ -31,13 +30,23 @@ books = [
     },
     {
         "title": "Exodus",
-        "hotkey": "e",
         "chapters"  : []
     }
 ]
 
+def transform_chapters(chapters_as_dict):
+    lst = []
+    for ch_index in chapters_as_dict:
+        ch = chapters_as_dict[ch_index]
+        lst.append((ch_index, ch["start"], ch["end"]))
+    return lst
+
+import json
+data = json.load(open('./bible-kjv.json', 'r'))
+books = list(map(lambda b: { 'title': b, 'chapters': transform_chapters(data[b]["chapters"]) }, data) )
+
 def main():
-    mainopts = list(map(lambda x: "[{}] {}".format(x["hotkey"], x["title"]), books))
+    mainopts = list(map(lambda x: "{}".format(x["title"]), books))
     book_menu = TerminalMenu(mainopts)
     print("Select book:")
     selected_mainopts_index = book_menu.show()
@@ -48,8 +57,15 @@ def main():
     chapter_menu = TerminalMenu(chapteropts)
     selected_chapteropts_index = chapter_menu.show()
     (chapter, start, end) = chapters[selected_chapteropts_index]
-    print(f"Chapter {chapter} selected!")
-    os.system("cat resources/the-king-james-bible.txt | sed -n '{},{}p' | ./retype".format(start, end))
+    print(f"Chapter {chapter} {start}-{end} selected!")
+
+    # os.system("cat resources/the-king-james-bible.txt | sed -n '{},{}p' | ./retype".format(start, end))
+
+    fo = open("resources/the-king-james-bible.txt", "r")
+    fo.seek(start)
+    content = fo.read(end - start + 1)
+    fo.close()
+    subprocess.run(["./retype"], text=True, input=content)
 
 if __name__ == "__main__":
     main()
