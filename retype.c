@@ -1,6 +1,7 @@
 /*
  * gcc -Wall -o retype retype.c -lutf8proc -lunistring $(ncursesw5-config --cflags --libs)
  * indent -kr -ts4 -nut -l80 *.c
+ * apt install libncursesw5-dev libunistring-dev libutf8proc-dev
  */
 
 #include <stdio.h>
