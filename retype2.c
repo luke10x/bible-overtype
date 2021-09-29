@@ -345,12 +345,25 @@ void write_here(int color_pair, char *str)
 
 void print_previous_lines(int number_of_lines)
 {
+    wclear(pad);
+    wmove(pad, 0, 0);
+
+    struct winsize w = get_winsize();
+    
+    refresh();
+    prefresh(pad, offset, 0, 0, 0, w.ws_row - 1, w.ws_col - 1);
+
     for (int i = 0; i < line + 1; i++) {
-        print_grey(line, column, broken_lines[i]);
+        print_grey(i, 0, broken_lines[i]);
+
+        refresh();
+        prefresh(pad, offset, 0, 0, 0, w.ws_row - 1, w.ws_col - 1);
     }
     wmove(pad, line, column);
+
+    // logger = fopenx`x`
+
     refresh();
-    struct winsize w = get_winsize();
     prefresh(pad, offset, 0, 0, 0, w.ws_row - 1, w.ws_col - 1);
 }
 
@@ -416,7 +429,7 @@ void overtype_current_line()
                 break;
             case XCH_KEY_NEWLINE:
                 if (column == len && undostack == 0) {
-                    cursor++;
+                    // cursor++;
                     line++;
                     column = 0;
                     // now move the visual cursor down, but first scol a bit if necessary
@@ -482,6 +495,9 @@ void overtype_current_line()
                 break;
             case XCH_KEY_RESIZE:
                 fit_in_available_screen();
+
+
+
                 break;
 
             default:
@@ -563,8 +579,31 @@ void fit_in_available_screen()
 
     pad = newpad(broken_lines_total, winsz.ws_col);
 
-    print_previous_lines(broken_lines_total);
+
+    int chars_in_lines = 0;
+    line = -1;
+    size_t linesize = 0;
+    while(chars_in_lines <= cursor) {
+        line++;
+        linesize = char_len(broken_lines[line]); // + 1; // because newlines add at least 1
+
+        // printf("Line %d\r\n", line);
+        chars_in_lines += linesize;
+    }
+    int chars_in_previous_lines = chars_in_lines - linesize;
+    // printf("Line %d:%d (%d)\r\n", line, column, cursor );
+    wmove(pad, line, column);
+    column = cursor - chars_in_previous_lines;
+
+    struct winsize w = get_winsize();
+    
+    refresh();
+    prefresh(pad, offset, 0, 0, 0, w.ws_row - 1, w.ws_col - 1);
+
+    print_previous_lines(line);
 }
+
+
 
 static void init_colors()
 {
@@ -612,8 +651,6 @@ static void load_file()
 
 int main(void)
 {
-    logger = fopen("retype.log", "a+");
-
     signal(SIGWINCH, sig_handler);
 
     // Locale has to be set before the call to iniscr()
