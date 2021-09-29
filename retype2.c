@@ -69,9 +69,11 @@ struct xchar {
 static volatile int resized = 1;
 
 struct charstack {
-    wint_t ch;
+    struct xchar ch;
     struct charstack *next;
 };
+
+struct charstack *undostack = NULL;
 
 void print_grey(const int row, const int col, const char *line)
 {
@@ -194,8 +196,10 @@ struct xchar getxchar()
             return (struct xchar) {.type = XCH_ALT,.ch = ch };
         }
 
-        char str[81];
-        sprintf(str, "%lc", ch);
+        char *str = malloc(2);
+        str[0] = ch;
+        str[1] = 0;
+        char *result = malloc(3);
 
         return (struct xchar) {.type = XCH_CHAR,.ch = ch,.str = str};
     }
@@ -376,23 +380,29 @@ void overtype_current_line()
         case XCH_CHAR:
     
             expected_ch = simplify(broken_lines[line], column);
+            char str[80];
+            sprintf(str, "%lc", expected_ch);
 
-            if (is_same(expected_ch, xch)) {
-                char str[80];
-                sprintf(str, "%lc", expected_ch);
+            if (is_same(expected_ch, xch) && undostack == NULL) {
                 write_here(GOOD_PAIR, str);
 
+                cursor++;
+                column++;
             } else {
-                char str[80];
-                sprintf(str, "%lc", expected_ch);
-                write_here(ERROR_PAIR, str);
+                const struct xchar good_ch = (column < char_len(line))
+                    ? (struct xchar) { .type = XCH_CHAR, .ch = '$', .str = str }
+                    : xch;
+                struct charstack *nptr = malloc(sizeof(struct charstack));
+                nptr->ch = good_ch;
+                nptr->next = undostack;
+                undostack = nptr;
+
+                write_here(ERROR_PAIR, xch.str);
             }
 
             if (column == len) {
-                break; // this is it don add nothing to this line...
+                break; // this is it done. Add nothing to this line...
             }
-            cursor++;
-            column++;
 
             break;
         case XCH_SPECIAL:
