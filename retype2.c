@@ -226,8 +226,8 @@ struct xchar getxchar()
         }
 
         if (ch == 7 || ch == 8) {
-            return (struct xchar) {.type = XCH_SPECIAL,.ch =
-                    XCH_KEY_BACKSPACE };
+            return (struct xchar) {.type = XCH_SPECIAL,.ch = XCH_KEY_BACKSPACE
+            };
         }
 
         if (ch < 27) {
@@ -355,7 +355,7 @@ void print_previous_lines(int number_of_lines)
     wmove(pad, 0, 0);
 
     struct winsize w = get_winsize();
-    
+
     refresh();
     prefresh(pad, offset, 0, 0, 0, w.ws_row - 1, w.ws_col - 1);
 
@@ -369,8 +369,8 @@ void print_previous_lines(int number_of_lines)
 
     wmove(pad, line, column);
 
-    char * input = broken_lines[line];
-    char * output = malloc(101);
+    char *input = broken_lines[line];
+    char *output = malloc(101);
     size_t len = 0;
     ucs4_t _;
 
@@ -424,7 +424,8 @@ void overtype_current_line()
                 cursor++;
                 column++;
             } else {
-                if (column + undostack_size >= w.ws_col - 1) break;
+                if (column + undostack_size >= w.ws_col - 1)
+                    break;
 
                 const struct xchar good_ch =
                     (column < char_len(broken_lines[line]))
@@ -604,7 +605,7 @@ void fit_in_available_screen()
     // printf("running in window size: %d rows / %d columns\n",
     //         winsz.ws_row, winsz.ws_col);
 
-    int broken_lines_total = break_lines(winsz.ws_col - 1 );
+    int broken_lines_total = break_lines(winsz.ws_col - 1);
 
     pad = newpad(broken_lines_total, winsz.ws_col);
 
@@ -612,9 +613,9 @@ void fit_in_available_screen()
     int chars_in_lines = 0;
     line = -1;
     size_t linesize = 0;
-    while(chars_in_lines <= cursor) {
+    while (chars_in_lines <= cursor) {
         line++;
-        linesize = char_len(broken_lines[line]); // + 1; // because newlines add at least 1
+        linesize = char_len(broken_lines[line]);    // + 1; // because newlines add at least 1
 
         // printf("Line %d\r\n", line);
         chars_in_lines += linesize;
@@ -631,7 +632,7 @@ void fit_in_available_screen()
     } else {
         offset = line - w.ws_row + 1;
     }
-    
+
     refresh();
     prefresh(pad, offset, 0, 0, 0, w.ws_row - 1, w.ws_col - 1);
 
