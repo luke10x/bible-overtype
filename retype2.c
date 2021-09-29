@@ -74,6 +74,7 @@ struct charstack {
 };
 
 struct charstack *undostack = NULL;
+int undostack_size = 0;
 
 void print_grey(const int row, const int col, const char *line)
 {
@@ -118,7 +119,7 @@ struct xchar getxchar()
             return (struct xchar) {.type = XCH_SPECIAL,.ch = XCH_KEY_RESIZE };
         }
 
-        halfdelay (3);
+        halfdelay (1);
         ch = getch();
 
         if (ch == 255) {
@@ -389,13 +390,16 @@ void overtype_current_line()
                 cursor++;
                 column++;
             } else {
-                const struct xchar good_ch = (column < char_len(line))
+                const struct xchar good_ch = (column < char_len(broken_lines[line]))
                     ? (struct xchar) { .type = XCH_CHAR, .ch = '$', .str = str }
                     : xch;
+                getch();
+
                 struct charstack *nptr = malloc(sizeof(struct charstack));
                 nptr->ch = good_ch;
                 nptr->next = undostack;
                 undostack = nptr;
+                undostack_size++;
 
                 write_here(ERROR_PAIR, xch.str);
             }
@@ -411,16 +415,12 @@ void overtype_current_line()
                 printf("<Escape> \r\n");
                 break;
             case XCH_KEY_NEWLINE:
-                if (column == len) {
-                    // char str[80];
-                    // sprintf(str, "%lc", expected_ch);
-                    // write_here(GOOD_PAIR, "");
-
+                if (column == len && undostack == 0) {
                     cursor++;
                     line++;
                     column = 0;
                     // now move the visual cursor down, but first scol a bit if necessary
-                    // ...
+                    
                     // ok move the cursor now
                     // wmove(pad, line - offset, 0);
                     print_grey(line, column, broken_lines[line]);
@@ -430,15 +430,49 @@ void overtype_current_line()
                     struct winsize w = get_winsize();
                     prefresh(pad, offset, 0, 0, 0, w.ws_row - 1, w.ws_col - 1);
                 } else if (column < len) {
+
+
+                    const struct xchar good_ch = (column < char_len(line))
+                        ? (struct xchar) { .type = XCH_CHAR, .ch = '$', .str = str }
+                        : xch;
+                    struct charstack *nptr = malloc(sizeof(struct charstack));
+                    nptr->ch = good_ch;
+                    nptr->next = undostack;
+                    undostack = nptr;
+                    undostack_size++;
+
                     write_here(ERROR_PAIR, "¶");
-                    cursor++;
-                    column++;
                 }
             
-                // printf("<Enter> \r\n");
                 break;
             case XCH_KEY_BACKSPACE:
-                printf("<Backspace> \r\n");
+                // printf("<Backspace> \r\n");
+                 if (undostack == NULL) {
+                    continue;
+                }
+
+                int last_char_pos = column+undostack_size-1;
+
+                // Pop from undo stack
+                struct charstack *temp;
+                temp = undostack;
+                undostack = undostack->next;
+                undostack_size--;
+
+                uint32_t correct_ch = simplify(broken_lines[line], last_char_pos);
+                if (correct_ch == 0) {
+                    correct_ch = 32;
+                }
+                char str[80] = {0, 0, 0 ,0 ,0};
+                sprintf(str, "%lc", correct_ch);
+
+                print_grey(line-offset, last_char_pos, str);
+              
+                wmove(pad, line-offset, last_char_pos);
+
+                refresh();
+                prefresh(pad, offset, 0, 0, 0, w.ws_row - 1, w.ws_col - 1);          
+
                 break;
             case XCH_KEY_RESIZE:
                 fit_in_available_screen();
