@@ -54,7 +54,7 @@ char broken_lines[MAX_LINES][MAX_LEN];
 
 int original_lines_total;
 
-int cursor = 0;
+int cursor = 32;
 int line = 0;                   // Line under cursor
 int column = 0;                 // Column under cursor (can also be called "line cursor")
 int offset = 0;
@@ -542,14 +542,19 @@ int break_lines(const int width)
 
         char *last = &(start[bytes_length - 1]);
 
-        while (start < last) {
+        while (start <= last) {
 
             char *finish =
                 (char *) skip_n_unicode_chars_or_to_eol(width, start);
 
             if (finish == NULL) {
+
+                // printf("FINIS is null \r\n");
                 finish = last + 1;
             }
+//             endwin();
+//                 printf("FINIS is %lc \r\n", finish[0]);
+// exit(0);
 
             strncpy(broken_lines[j], start, finish - start);
             for (int z = 0; z < MAX_LEN; z++)
@@ -575,7 +580,7 @@ void fit_in_available_screen()
     // printf("running in window size: %d rows / %d columns\n",
     //         winsz.ws_row, winsz.ws_col);
 
-    int broken_lines_total = break_lines(winsz.ws_col - 1);
+    int broken_lines_total = break_lines(winsz.ws_col - 1 );
 
     pad = newpad(broken_lines_total, winsz.ws_col);
 
