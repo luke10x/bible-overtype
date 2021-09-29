@@ -54,7 +54,7 @@ char broken_lines[MAX_LINES][MAX_LEN];
 
 int original_lines_total;
 
-int cursor = 32;
+int cursor = 200;
 int line = 0;                   // Line under cursor
 int column = 0;                 // Column under cursor (can also be called "line cursor")
 int offset = 0;
@@ -79,11 +79,17 @@ int undostack_size = 0;
 void print_grey(const int row, const int col, const char *line)
 {
     wmove(pad, row, col);
-    attron(COLOR_PAIR(GREY_PAIR));
-
+    wattron(pad, COLOR_PAIR(GREY_PAIR));
     waddstr(pad, line);
+    wattroff(pad, COLOR_PAIR(GREY_PAIR));
+}
 
-    attroff(COLOR_PAIR(GREY_PAIR));
+void print_good(const int row, const int col, const char *line)
+{
+    wmove(pad, row, col);
+    wattron(pad, COLOR_PAIR(GOOD_PAIR));
+    waddstr(pad, line);
+    wattroff(pad, COLOR_PAIR(GOOD_PAIR));
 }
 
 static void sig_handler(int sig)
@@ -353,15 +359,33 @@ void print_previous_lines(int number_of_lines)
     refresh();
     prefresh(pad, offset, 0, 0, 0, w.ws_row - 1, w.ws_col - 1);
 
-    for (int i = 0; i < line + 1; i++) {
-        print_grey(i, 0, broken_lines[i]);
+    for (int i = 0; i < line; i++) {
+        print_good(i, 0, broken_lines[i]);
 
         refresh();
         prefresh(pad, offset, 0, 0, 0, w.ws_row - 1, w.ws_col - 1);
     }
+    print_good(line, 0, broken_lines[line]);
+
     wmove(pad, line, column);
 
-    // logger = fopenx`x`
+    char * input = broken_lines[line];
+    char * output = malloc(101);
+    size_t len = 0;
+    ucs4_t _;
+
+    for (uint8_t * it = (uint8_t *) input; it; it = (uint8_t *) u8_next(&_, it)) {
+        len++;
+        if (len > column) {
+            sprintf(output, "%s", it);
+            break;
+        }
+    }
+
+    print_grey(line, column, output);
+    wmove(pad, line, column);
+
+// printf("STR:%lc", simplify())
 
     refresh();
     prefresh(pad, offset, 0, 0, 0, w.ws_row - 1, w.ws_col - 1);
@@ -601,6 +625,12 @@ void fit_in_available_screen()
     column = cursor - chars_in_previous_lines;
 
     struct winsize w = get_winsize();
+
+    if (line - 1 < w.ws_row) {
+        offset = 1;
+    } else {
+        offset = line - w.ws_row + 1;
+    }
     
     refresh();
     prefresh(pad, offset, 0, 0, 0, w.ws_row - 1, w.ws_col - 1);
