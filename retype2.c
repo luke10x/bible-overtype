@@ -387,6 +387,8 @@ void overtype_current_line()
                 cursor++;
                 column++;
             } else {
+                if (column + undostack_size >= w.ws_col - 1) break;
+
                 const struct xchar good_ch =
                     (column < char_len(broken_lines[line]))
                 ? (struct xchar) {.type = XCH_CHAR,.ch = '$',.str = str }
@@ -557,7 +559,7 @@ void fit_in_available_screen()
     // printf("running in window size: %d rows / %d columns\n",
     //         winsz.ws_row, winsz.ws_col);
 
-    int broken_lines_total = break_lines(winsz.ws_col);
+    int broken_lines_total = break_lines(winsz.ws_col - 1);
 
     pad = newpad(broken_lines_total, winsz.ws_col);
 
