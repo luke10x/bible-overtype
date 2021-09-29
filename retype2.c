@@ -105,6 +105,46 @@ char * combine_bytes(int n, uint8_t *bytes) {
     return result;
 }
 
+uint8_t normalize(const uint32_t c)
+{
+    uint8_t *output;
+
+    char *input_ = malloc(sizeof(const uint32_t) + 1);
+    sprintf(input_, "%lc", c);
+
+    const int first_ch_size = strlen(input_);   //u8_mblen(&c, sizeof(uint32_t));
+
+    utf8proc_map((unsigned char *) input_, first_ch_size, &output,
+                 UTF8PROC_DECOMPOSE | UTF8PROC_NULLTERM | UTF8PROC_STABLE |
+                 UTF8PROC_STRIPMARK | UTF8PROC_CASEFOLD);
+
+    return *output;
+}
+
+size_t char_len(char *input) {
+    size_t len = 0;
+    ucs4_t _;
+
+    for (uint8_t * it = (uint8_t *)input; it; it = (uint8_t *)u8_next(&_, it)) {
+        len++;
+    }
+    len--;
+    return len;
+}
+
+const uint32_t simplify(const char *input, const int index)
+{
+    size_t len = char_len(input);
+    if (index >= len) {
+        return 0
+        ;
+    }
+
+    const uint32_t *mbcs = u32_strconv_from_locale(input);
+    const uint32_t unicode = (int) *(&mbcs[index]);
+    return unicode;
+}
+
 /**
  * Values to test it with: ė
  */
@@ -119,7 +159,7 @@ struct xchar getxchar()
             return (struct xchar) {.type = XCH_SPECIAL,.ch = XCH_KEY_RESIZE };
         }
 
-        halfdelay (1);
+        halfdelay(1);
         ch = getch();
 
         if (ch == 255) {
@@ -143,7 +183,6 @@ struct xchar getxchar()
             fcntl(STDIN_FILENO, F_SETFL, flags | O_NONBLOCK);
             do {
                 uint8_t ch = getch();
-
                 int seventh = (ch >> 7) & 1;
                 int sixth = (ch >> 6) & 1;
                 if (seventh && !sixth) {
@@ -157,10 +196,13 @@ struct xchar getxchar()
                     // freopen("/dev/tty", "rw", stdin);
                     getch(); // FIXME more reliable way to clean it perhaps???
 
+                    char *str = combine_bytes(pending_curr, pending_char);
+                    ch = normalize(simplify(str, 0));
+
                     return (struct xchar) {
                         .type = XCH_CHAR,
-                        .ch = '@',
-                        .str = combine_bytes(pending_curr, pending_char)
+                        .ch = ch,
+                        .str = str
                     };
                 };
             }
@@ -265,51 +307,7 @@ struct winsize get_winsize()
     return winsz;
 }
 
-
-uint8_t normalize(const uint32_t c)
-{
-    uint8_t *output;
-
-    char *input_ = malloc(sizeof(const uint32_t) + 1);
-    sprintf(input_, "%lc", c);
-
-    const int first_ch_size = strlen(input_);   //u8_mblen(&c, sizeof(uint32_t));
-
-    utf8proc_map((unsigned char *) input_, first_ch_size, &output,
-                 UTF8PROC_DECOMPOSE | UTF8PROC_NULLTERM | UTF8PROC_STABLE |
-                 UTF8PROC_STRIPMARK | UTF8PROC_CASEFOLD);
-
-    return *output;
-}
-
-size_t char_len(char *input) {
-    size_t len = 0;
-    ucs4_t _;
-
-    for (uint8_t * it = (uint8_t *)input; it; it = (uint8_t *)u8_next(&_, it)) {
-        len++;
-    }
-    len--;
-    return len;
-}
-
-const uint32_t simplify(const char *input, const int index)
-{
-    size_t len = char_len(input);
-    if (index >= len) {
-        return 0
-        ;
-    }
-
-    const uint32_t *mbcs = u32_strconv_from_locale(input);
-    const uint32_t unicode = (int) *(&mbcs[index]);
-    return unicode;
-}
-
 int is_same(uint32_t expected, struct xchar pressed) {
-    // if (pressed.type == XCH_SPECIAL && pressed.ch == XCH_KEY_NEWLINE) {
-        // printf("expexted = %d\r\n", expected);
-    // }
     if (expected == 10 && expected == 0) {
         if (pressed.type == XCH_SPECIAL && pressed.ch == XCH_KEY_NEWLINE) {
             return TRUE;
@@ -319,13 +317,7 @@ int is_same(uint32_t expected, struct xchar pressed) {
     if (pressed.type == XCH_CHAR) {
 
         uint8_t n_expected = normalize(expected);
-
-        uint8_t n_pressed;
-        if (pressed.ch < 255) {
-            n_pressed = pressed.ch;
-        } else {
-            n_pressed = normalize(simplify(pressed.str, 0));
-        }
+        uint8_t n_pressed = normalize(simplify(pressed.str, 0));
 
         // printf("eq(%d, %d)\r\n", n_expected, n_pressed);
         if (n_expected == n_pressed) {
@@ -374,7 +366,6 @@ void overtype_current_line()
         // printf("EXPECTED IS %d <", expected_ch);
         struct xchar xch = getxchar_();
 
-
         len = char_len(broken_lines[line]);
 
         switch (xch.type) {
@@ -393,7 +384,6 @@ void overtype_current_line()
                 const struct xchar good_ch = (column < char_len(broken_lines[line]))
                     ? (struct xchar) { .type = XCH_CHAR, .ch = '$', .str = str }
                     : xch;
-                getch();
 
                 struct charstack *nptr = malloc(sizeof(struct charstack));
                 nptr->ch = good_ch;
