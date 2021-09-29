@@ -55,15 +55,15 @@ char broken_lines[MAX_LINES][MAX_LEN];
 int original_lines_total;
 
 int cursor = 0;
-int line = 0; // Line under cursor
-int column = 0; // Column under cursor (can also be called "line cursor")
+int line = 0;                   // Line under cursor
+int column = 0;                 // Column under cursor (can also be called "line cursor")
 int offset = 0;
 
 
 struct xchar {
     uint8_t type;
     wint_t ch;
-    char * str;
+    char *str;
 };
 
 static volatile int resized = 1;
@@ -80,7 +80,7 @@ void print_grey(const int row, const int col, const char *line)
 {
     wmove(pad, row, col);
     attron(COLOR_PAIR(GREY_PAIR));
-    
+
     waddstr(pad, line);
 
     attroff(COLOR_PAIR(GREY_PAIR));
@@ -95,7 +95,8 @@ static void sig_handler(int sig)
     signal(SIGWINCH, sig_handler);
 }
 
-char * combine_bytes(int n, uint8_t *bytes) {
+char *combine_bytes(int n, uint8_t * bytes)
+{
     char *result = malloc(3);
 
     result[0] = bytes[0];
@@ -121,11 +122,12 @@ uint8_t normalize(const uint32_t c)
     return *output;
 }
 
-size_t char_len(char *input) {
+size_t char_len(char *input)
+{
     size_t len = 0;
     ucs4_t _;
 
-    for (uint8_t * it = (uint8_t *)input; it; it = (uint8_t *)u8_next(&_, it)) {
+    for (uint8_t * it = (uint8_t *) input; it; it = (uint8_t *) u8_next(&_, it)) {
         len++;
     }
     len--;
@@ -136,8 +138,7 @@ const uint32_t simplify(const char *input, const int index)
 {
     size_t len = char_len(input);
     if (index >= len) {
-        return 0
-        ;
+        return 0;
     }
 
     const uint32_t *mbcs = u32_strconv_from_locale(input);
@@ -148,7 +149,8 @@ const uint32_t simplify(const char *input, const int index)
 /**
  * Values to test it with: ė
  */
-uint8_t pending_char[4] = {0 ,0 ,0, 0};
+uint8_t pending_char[4] = { 0, 0, 0, 0 };
+
 int pending_curr = 0;
 struct xchar getxchar()
 {
@@ -166,7 +168,8 @@ struct xchar getxchar()
             continue;
         }
 
-        if (ch == 255) ch = getch(); // FIXME where is this coming from? If ever..
+        if (ch == 255)
+            ch = getch();       // FIXME where is this coming from? If ever..
 
         int seventh = (ch >> 7) & 1;
         int sixth = (ch >> 6) & 1;
@@ -194,7 +197,7 @@ struct xchar getxchar()
                     fcntl(STDIN_FILENO, F_SETFL, flags);
                     // fseek(stdin, 0, SEEK_END);
                     // freopen("/dev/tty", "rw", stdin);
-                    getch(); // FIXME more reliable way to clean it perhaps???
+                    getch();    // FIXME more reliable way to clean it perhaps???
 
                     char *str = combine_bytes(pending_curr, pending_char);
                     ch = normalize(simplify(str, 0));
@@ -217,7 +220,8 @@ struct xchar getxchar()
         }
 
         if (ch == 7 || ch == 8) {
-            return (struct xchar) {.type = XCH_SPECIAL,.ch = XCH_KEY_BACKSPACE };
+            return (struct xchar) {.type = XCH_SPECIAL,.ch =
+                    XCH_KEY_BACKSPACE };
         }
 
         if (ch < 27) {
@@ -244,7 +248,7 @@ struct xchar getxchar()
         str[1] = 0;
         char *result = malloc(3);
 
-        return (struct xchar) {.type = XCH_CHAR,.ch = ch,.str = str};
+        return (struct xchar) {.type = XCH_CHAR,.ch = ch,.str = str };
     }
     while (ch == ERR || ch == KEY_RESIZE);
 }
@@ -256,7 +260,7 @@ struct xchar getxchar_()
 {
     struct xchar xch = getxchar();
 
-    if (1) // comment this line to take advantage of the logs!
+    if (1)                      // comment this line to take advantage of the logs!
         return xch;
     //////////////////
 
@@ -307,7 +311,8 @@ struct winsize get_winsize()
     return winsz;
 }
 
-int is_same(uint32_t expected, struct xchar pressed) {
+int is_same(uint32_t expected, struct xchar pressed)
+{
     if (expected == 10 && expected == 0) {
         if (pressed.type == XCH_SPECIAL && pressed.ch == XCH_KEY_NEWLINE) {
             return TRUE;
@@ -328,7 +333,8 @@ int is_same(uint32_t expected, struct xchar pressed) {
     return FALSE;
 }
 
-void write_here(int color_pair, char * str) {
+void write_here(int color_pair, char *str)
+{
     wattron(pad, COLOR_PAIR(color_pair));
     waddstr(pad, str);
     wattroff(pad, COLOR_PAIR(color_pair));
@@ -339,7 +345,7 @@ void write_here(int color_pair, char * str) {
 
 void print_previous_lines(int number_of_lines)
 {
-    for(int i = 0; i < line+1; i++) {
+    for (int i = 0; i < line + 1; i++) {
         print_grey(line, column, broken_lines[i]);
     }
     wmove(pad, line, column);
@@ -370,7 +376,7 @@ void overtype_current_line()
 
         switch (xch.type) {
         case XCH_CHAR:
-    
+
             expected_ch = simplify(broken_lines[line], column);
             char str[80];
             sprintf(str, "%lc", expected_ch);
@@ -381,9 +387,10 @@ void overtype_current_line()
                 cursor++;
                 column++;
             } else {
-                const struct xchar good_ch = (column < char_len(broken_lines[line]))
-                    ? (struct xchar) { .type = XCH_CHAR, .ch = '$', .str = str }
-                    : xch;
+                const struct xchar good_ch =
+                    (column < char_len(broken_lines[line]))
+                ? (struct xchar) {.type = XCH_CHAR,.ch = '$',.str = str }
+                : xch;
 
                 struct charstack *nptr = malloc(sizeof(struct charstack));
                 nptr->ch = good_ch;
@@ -395,14 +402,15 @@ void overtype_current_line()
             }
 
             if (column == len) {
-                break; // this is it done. Add nothing to this line...
+                break;          // this is it done. Add nothing to this line...
             }
 
             break;
         case XCH_SPECIAL:
             switch (xch.ch) {
             case XCH_KEY_ESC:
-                printf("<Escape> \r\n");
+                endwin();
+                exit(0);
                 break;
             case XCH_KEY_NEWLINE:
                 if (column == len && undostack == 0) {
@@ -410,7 +418,7 @@ void overtype_current_line()
                     line++;
                     column = 0;
                     // now move the visual cursor down, but first scol a bit if necessary
-                    
+
                     // ok move the cursor now
                     // wmove(pad, line - offset, 0);
                     print_grey(line, column, broken_lines[line]);
@@ -438,15 +446,15 @@ void overtype_current_line()
 
                     // write_here(ERROR_PAIR, "¶");
                 }
-            
+
                 break;
             case XCH_KEY_BACKSPACE:
                 // printf("<Backspace> \r\n");
-                 if (undostack == NULL) {
+                if (undostack == NULL) {
                     continue;
                 }
 
-                int last_char_pos = column+undostack_size-1;
+                int last_char_pos = column + undostack_size - 1;
 
                 // Pop from undo stack
                 struct charstack *temp;
@@ -454,19 +462,20 @@ void overtype_current_line()
                 undostack = undostack->next;
                 undostack_size--;
 
-                uint32_t correct_ch = simplify(broken_lines[line], last_char_pos);
+                uint32_t correct_ch =
+                    simplify(broken_lines[line], last_char_pos);
                 if (correct_ch == 0) {
                     correct_ch = 32;
                 }
-                char str[80] = {0, 0, 0 ,0 ,0};
+                char str[80] = { 0, 0, 0, 0, 0 };
                 sprintf(str, "%lc", correct_ch);
 
                 print_grey(line, last_char_pos, str);
-              
+
                 wmove(pad, line, last_char_pos);
 
                 refresh();
-                prefresh(pad, offset, 0, 0, 0, w.ws_row - 1, w.ws_col - 1);          
+                prefresh(pad, offset, 0, 0, 0, w.ws_row - 1, w.ws_col - 1);
 
                 break;
             case XCH_KEY_RESIZE:
@@ -478,7 +487,7 @@ void overtype_current_line()
             }
             break;
         }
-        
+
         fseek(stdin, 0, SEEK_END);
     } while (true);
 }
@@ -488,7 +497,8 @@ uint8_t *skip_n_unicode_chars_or_to_eol(int n, const char *source)
     size_t len = 0;
     ucs4_t _;
 
-    for (uint8_t * it = (uint8_t *)source; it; it = (uint8_t *)u8_next(&_, it)) {
+    for (uint8_t * it = (uint8_t *) source; it;
+         it = (uint8_t *) u8_next(&_, it)) {
         if (len == n) {
             return it;
         }
@@ -504,7 +514,7 @@ int break_lines(const int width)
     for (int i = 0; i < original_lines_total; i++) {
         char *start = original_lines[i];
         // printf("start [%d] \r\n", i);
-    
+
         int bytes_length = strlen(start);
 
         if (bytes_length == 0) {
@@ -512,7 +522,7 @@ int break_lines(const int width)
             j++;
         }
 
-        char *last = &(start[bytes_length-1]);
+        char *last = &(start[bytes_length - 1]);
 
         while (start < last) {
 
@@ -521,19 +531,20 @@ int break_lines(const int width)
 
             if (finish == NULL) {
                 finish = last + 1;
-            }        
+            }
 
             strncpy(broken_lines[j], start, finish - start);
-            for (int z = 0; z < MAX_LEN; z++) broken_lines[j][z] = 0;
+            for (int z = 0; z < MAX_LEN; z++)
+                broken_lines[j][z] = 0;
             strncpy(broken_lines[j], start, finish - start);
-            broken_lines[j][finish - start ] = 0;
+            broken_lines[j][finish - start] = 0;
 
             j++;
 
             if (finish == NULL) {
                 start = (char *) skip_n_unicode_chars_or_to_eol(1, finish);
             } else {
-                start = finish;            
+                start = finish;
             }
         }
     }
@@ -593,7 +604,7 @@ static void load_file()
     fclose(fp);
 
     freopen("/dev/tty", "rw", stdin);
-   
+
     original_lines_total = i;
 }
 
