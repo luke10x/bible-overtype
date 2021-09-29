@@ -424,24 +424,29 @@ void overtype_current_line()
                     // ok move the cursor now
                     // wmove(pad, line - offset, 0);
                     print_grey(line, column, broken_lines[line]);
-                    wmove(pad, line - offset, 0);
+                    wmove(pad, line, 0);
 
                     refresh();
                     struct winsize w = get_winsize();
+
+
+                    if (line - offset >= w.ws_row) {
+                        offset++;
+                    }
                     prefresh(pad, offset, 0, 0, 0, w.ws_row - 1, w.ws_col - 1);
                 } else if (column < len) {
 
 
-                    const struct xchar good_ch = (column < char_len(line))
-                        ? (struct xchar) { .type = XCH_CHAR, .ch = '$', .str = str }
-                        : xch;
-                    struct charstack *nptr = malloc(sizeof(struct charstack));
-                    nptr->ch = good_ch;
-                    nptr->next = undostack;
-                    undostack = nptr;
-                    undostack_size++;
+                    // const struct xchar good_ch = (column < char_len(line))
+                    //     ? (struct xchar) { .type = XCH_CHAR, .ch = '$', .str = str }
+                    //     : xch;
+                    // struct charstack *nptr = malloc(sizeof(struct charstack));
+                    // nptr->ch = good_ch;
+                    // nptr->next = undostack;
+                    // undostack = nptr;
+                    // undostack_size++;
 
-                    write_here(ERROR_PAIR, "¶");
+                    // write_here(ERROR_PAIR, "¶");
                 }
             
                 break;
@@ -466,9 +471,9 @@ void overtype_current_line()
                 char str[80] = {0, 0, 0 ,0 ,0};
                 sprintf(str, "%lc", correct_ch);
 
-                print_grey(line-offset, last_char_pos, str);
+                print_grey(line, last_char_pos, str);
               
-                wmove(pad, line-offset, last_char_pos);
+                wmove(pad, line, last_char_pos);
 
                 refresh();
                 prefresh(pad, offset, 0, 0, 0, w.ws_row - 1, w.ws_col - 1);          
