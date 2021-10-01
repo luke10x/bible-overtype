@@ -424,7 +424,7 @@ void overtype_current_line()
                 cursor++;
                 column++;
             } else {
-                if (column + undostack_size >= w.ws_col - 1 - margin)
+                if (margin + column + undostack_size >= w.ws_col - 1)
                     break;
 
                 const struct xchar good_ch =
@@ -471,6 +471,13 @@ void overtype_current_line()
                     if (line - offset >= w.ws_row) {
                         offset++;
                     }
+
+                    // if (line - 1 < w.ws_row) {
+                    //     offset = 0;
+                    // } else {
+                    //     offset = line - w.ws_row + 1;
+                    // }
+
                     prefresh(pad, offset, 0, 0, margin, w.ws_row - 1,
                              w.ws_col - 1);
                 } else if (column < len) {
@@ -558,7 +565,7 @@ int break_lines(const int width)
 {
     int j = 0;
 
-    int longest_line;
+    int longest_line = 0;
     for (int i = 0; i < original_lines_total; i++) {
         int this_len = char_len(original_lines[i]);
         if (this_len > longest_line) {
@@ -650,8 +657,6 @@ void fit_in_available_screen()
 
     print_previous_lines(line);
 }
-
-
 
 static void init_colors()
 {
