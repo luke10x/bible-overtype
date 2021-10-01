@@ -391,6 +391,52 @@ void print_previous_lines(int number_of_lines)
     prefresh(pad, offset, 0, 0, margin, w.ws_row - 1, w.ws_col - 1);
 }
 
+int this_is_lnumber_start(const char *line, int typed)
+{
+    const uint32_t expected_ch = simplify(line, typed);
+    if (expected_ch >= 0x0030 && expected_ch <= 0x0039) {
+        return true;
+    }
+    return false;
+}
+
+int this_is_subsequent_space(const char *line, int typed)
+{
+    if (typed == 0)
+        return false;
+    const uint32_t previous_ch = simplify(line, typed - 1);
+    const uint32_t expected_ch = simplify(line, typed);
+    if (previous_ch == 0x0020 && expected_ch == 0x0020) {
+        return true;
+    }
+    return false;
+}
+
+bool should_autotext(int now_started, const char *line, int typed,
+                     struct charstack *undostack)
+{
+    if (undostack != 0) {
+        return false;
+    }
+    if (now_started) {
+        const uint32_t expected_ch = simplify(line, typed);
+        if (expected_ch == 0x0020 ||
+            expected_ch == 0x003A ||
+            (expected_ch >= 0x0030 && expected_ch <= 0x0039)
+            ) {
+            return true;
+        }
+    } else {
+        if (this_is_lnumber_start(line, typed)) {
+            return true;
+        }
+        if (this_is_subsequent_space(line, typed)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 void overtype_current_line()
 {
     struct charstack *undostack = NULL;
@@ -406,18 +452,22 @@ void overtype_current_line()
 
         uint32_t expected_ch;
         size_t len;
-        // printf("EXPECTED IS %d <", expected_ch);
-        struct xchar xch = getxchar_();
+        char str[80];
+
+        expected_ch = simplify(broken_lines[line], column);
+            sprintf(str, "%lc", expected_ch);
+
+        autotext_started =
+            should_autotext(autotext_started, broken_lines[line], column, undostack);
+
+        struct xchar xch = autotext_started 
+        ? (struct xchar){.type = XCH_CHAR, .ch = normalize(expected_ch), .str = str}
+        : getxchar_();
 
         len = char_len(broken_lines[line]);
 
         switch (xch.type) {
         case XCH_CHAR:
-
-            expected_ch = simplify(broken_lines[line], column);
-            char str[80];
-            sprintf(str, "%lc", expected_ch);
-
             if (is_same(expected_ch, xch) && undostack == NULL) {
                 write_here(GOOD_PAIR, str);
 
