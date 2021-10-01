@@ -58,7 +58,7 @@ int cursor = 200;
 int line = 0;                   // Line under cursor
 int column = 0;                 // Column under cursor (can also be called "line cursor")
 int offset = 0;
-
+int margin = 0;
 
 struct xchar {
     uint8_t type;
@@ -346,7 +346,7 @@ void write_here(int color_pair, char *str)
     wattroff(pad, COLOR_PAIR(color_pair));
     refresh();
     struct winsize w = get_winsize();
-    prefresh(pad, offset, 0, 0, 0, w.ws_row - 1, w.ws_col - 1);
+    prefresh(pad, offset, 0, 0, 0, w.ws_row - 1, w.ws_col - 1 - margin * 2);
 }
 
 void print_previous_lines(int number_of_lines)
@@ -357,13 +357,13 @@ void print_previous_lines(int number_of_lines)
     struct winsize w = get_winsize();
 
     refresh();
-    prefresh(pad, offset, 0, 0, 0, w.ws_row - 1, w.ws_col - 1);
+    prefresh(pad, offset, 0, 0, 0, w.ws_row - 1, w.ws_col - 1 - margin * 2);
 
     for (int i = 0; i < line; i++) {
         print_good(i, 0, broken_lines[i]);
 
         refresh();
-        prefresh(pad, offset, 0, 0, 0, w.ws_row - 1, w.ws_col - 1);
+        prefresh(pad, offset, 0, 0, 0, w.ws_row - 1, w.ws_col - 1 - margin * 2);
     }
     print_good(line, 0, broken_lines[line]);
 
@@ -388,7 +388,7 @@ void print_previous_lines(int number_of_lines)
 // printf("STR:%lc", simplify())
 
     refresh();
-    prefresh(pad, offset, 0, 0, 0, w.ws_row - 1, w.ws_col - 1);
+    prefresh(pad, offset, 0, 0, 0, w.ws_row - 1, w.ws_col - 1 - margin * 2);
 }
 
 void overtype_current_line()
@@ -398,8 +398,11 @@ void overtype_current_line()
     wmove(pad, line, column);
     refresh();
 
+
+
     struct winsize w = get_winsize();
-    prefresh(pad, offset, 0, 0, 0, w.ws_row - 1, w.ws_col - 1);
+    prefresh(pad, offset, 0, 0, 0, w.ws_row - 1, w.ws_col - 1 - margin * 2);
+
 
     bool autotext_started = false;
     do {
@@ -471,7 +474,7 @@ void overtype_current_line()
                     if (line - offset >= w.ws_row) {
                         offset++;
                     }
-                    prefresh(pad, offset, 0, 0, 0, w.ws_row - 1, w.ws_col - 1);
+                    prefresh(pad, offset, 0, 0, 0, w.ws_row - 1, w.ws_col - 1 - margin * 2);
                 } else if (column < len) {
 
 
@@ -515,13 +518,11 @@ void overtype_current_line()
                 wmove(pad, line, last_char_pos);
 
                 refresh();
-                prefresh(pad, offset, 0, 0, 0, w.ws_row - 1, w.ws_col - 1);
+                prefresh(pad, offset, 0, 0, 0, w.ws_row - 1, w.ws_col - 1 - margin * 2);
 
                 break;
             case XCH_KEY_RESIZE:
                 fit_in_available_screen();
-
-
 
                 break;
 
@@ -550,11 +551,21 @@ uint8_t *skip_n_unicode_chars_or_to_eol(int n, const char *source)
     return NULL;
 }
 
+int get_padding(int longest_line, int term_cols)
+{
+    return (term_cols - longest_line) / 2;
+}
+
 int break_lines(const int width)
 {
     int j = 0;
 
+    int longest_line;
     for (int i = 0; i < original_lines_total; i++) {
+        int this_len = char_len(original_lines[i]);
+        if (this_len > longest_line) {
+            longest_line = this_len;
+        }
         char *start = original_lines[i];
         // printf("start [%d] \r\n", i);
 
@@ -596,6 +607,9 @@ int break_lines(const int width)
             }
         }
     }
+
+    margin = get_padding(longest_line, width);
+
     return j;
 }
 
@@ -607,7 +621,7 @@ void fit_in_available_screen()
 
     int broken_lines_total = break_lines(winsz.ws_col - 1);
 
-    pad = newpad(broken_lines_total, winsz.ws_col);
+    pad = newpad(broken_lines_total, winsz.ws_col - margin * 2);
 
 
     int chars_in_lines = 0;
@@ -634,7 +648,7 @@ void fit_in_available_screen()
     }
 
     refresh();
-    prefresh(pad, offset, 0, 0, 0, w.ws_row - 1, w.ws_col - 1);
+    prefresh(pad, offset, 0, 0, 0, w.ws_row - 1, w.ws_col - 1 - margin * 2);
 
     print_previous_lines(line);
 }
