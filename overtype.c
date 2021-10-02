@@ -765,31 +765,27 @@ int main(void)
 
     // Locale has to be set before the call to iniscr()
     setlocale(LC_ALL, "");
+    
+    load_file();
+        
     initscr();
-
     keypad(stdscr, TRUE);
     cbreak();
     noecho();
     init_colors();
 
-    load_file();
-
-
     time_t start_time;
     time_t end_time;
-
     start_time = time(NULL);
 
     overtype_current_line();
 
     end_time = time(NULL);
-
     const double diff_t = difftime(end_time, start_time);
     const int all_seconds = floor(diff_t);
     const int minutes = (int) floor(all_seconds / 60);
     const int seconds = all_seconds % 60;
 
-    // getch();
     endwin();
     printf("Time: %d:%02d\r\n", minutes, seconds);
 

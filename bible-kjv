@@ -65,7 +65,7 @@ def main():
     fo.seek(start)
     content = fo.read(end - start + 1)
     fo.close()
-    subprocess.run(["./retype"], text=True, input=content)
+    subprocess.run(["./overtype"], text=True, input=content)
 
 if __name__ == "__main__":
     main()
