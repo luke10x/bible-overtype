@@ -133,7 +133,7 @@ uint8_t normalize(const uint32_t c)
     return *output;
 }
 
-size_t char_len(char *input)
+size_t char_len(const char *input)
 {
     size_t len = 0;
     ucs4_t _;
@@ -257,11 +257,14 @@ struct xchar getxchar()
         char *str = malloc(2);
         str[0] = ch;
         str[1] = 0;
-        char *result = malloc(3);
 
         return (struct xchar) {.type = XCH_CHAR,.ch = ch,.str = str };
     }
     while (ch == ERR || ch == KEY_RESIZE);
+
+
+
+    return (struct xchar) {.type = XCH_ALT,.ch = '2',.str = "2" };
 }
 
 /**
@@ -440,6 +443,123 @@ bool should_autotext(int now_started, const char *line, int typed,
     return false;
 }
 
+uint8_t *skip_n_unicode_chars_or_to_eol(int n, const char *source)
+{
+    size_t len = 0;
+    ucs4_t _;
+
+    for (uint8_t * it = (uint8_t *) source; it;
+         it = (uint8_t *) u8_next(&_, it)) {
+        if (len == n) {
+            return it;
+        }
+        len++;
+    }
+    return NULL;
+}
+
+int get_padding(int longest_line, int term_cols)
+{
+    return (term_cols - longest_line) / 2;
+}
+
+int break_lines(const int width)
+{
+    int j = 0;
+
+    int longest_line = 0;
+    for (int i = 0; i < original_lines_total; i++) {
+        int this_len = char_len(original_lines[i]);
+        if (this_len > longest_line) {
+            longest_line = this_len;
+        }
+        char *start = original_lines[i];
+        // printf("start [%d] \r\n", i);
+
+        int bytes_length = strlen(start);
+
+        if (bytes_length == 0) {
+            broken_lines[j][0] = 0;
+            j++;
+        }
+
+        char *last = &(start[bytes_length - 1]);
+
+        while (start <= last) {
+
+            char *finish =
+                (char *) skip_n_unicode_chars_or_to_eol(width, start);
+
+            if (finish == NULL) {
+
+                // printf("FINIS is null \r\n");
+                finish = last + 1;
+            }
+//             endwin();
+//                 printf("FINIS is %lc \r\n", finish[0]);
+// exit(0);
+
+            strncpy(broken_lines[j], start, finish - start);
+            for (int z = 0; z < MAX_LEN; z++)
+                broken_lines[j][z] = 0;
+            strncpy(broken_lines[j], start, finish - start);
+            broken_lines[j][finish - start] = 0;
+
+            j++;
+
+            if (finish == NULL) {
+                start = (char *) skip_n_unicode_chars_or_to_eol(1, finish);
+            } else {
+                start = finish;
+            }
+        }
+    }
+
+    margin = get_padding(longest_line, width);
+    broken_lines_total = j;
+    return j;
+}
+
+void fit_in_available_screen()
+{
+    struct winsize winsz = get_winsize();
+    // printf("running in window size: %d rows / %d columns\n",
+    //         winsz.ws_row, winsz.ws_col);
+
+    int broken_lines_total = break_lines(winsz.ws_col - 1);
+
+    pad = newpad(broken_lines_total, winsz.ws_col - margin);
+
+
+    int chars_in_lines = 0;
+    line = -1;
+    size_t linesize = 0;
+    while (chars_in_lines <= cursor) {
+        line++;
+        linesize = char_len(broken_lines[line]);    // + 1; // because newlines add at least 1
+
+        // printf("Line %d\r\n", line);
+        chars_in_lines += linesize;
+    }
+    int chars_in_previous_lines = chars_in_lines - linesize;
+    // printf("Line %d:%d (%d)\r\n", line, column, cursor );
+    wmove(pad, line, column);
+    column = cursor - chars_in_previous_lines;
+
+    struct winsize w = get_winsize();
+
+    if (line - 1 < w.ws_row) {
+        offset = 0;
+    } else {
+        offset = line - w.ws_row + 1;
+    }
+
+    refresh();
+    prefresh(pad, offset, 0, 0, margin, w.ws_row - 1, w.ws_col - 1);
+
+    print_previous_lines(line);
+}
+
 void overtype_current_line()
 {
     struct charstack *undostack = NULL;
@@ -561,8 +681,8 @@ void overtype_current_line()
                 int last_char_pos = column + undostack_size - 1;
 
                 // Pop from undo stack
-                struct charstack *temp;
-                temp = undostack;
+                // struct charstack *temp;
+                // temp = undostack;
                 undostack = undostack->next;
                 undostack_size--;
 
@@ -595,123 +715,6 @@ void overtype_current_line()
 
         fseek(stdin, 0, SEEK_END);
     } while (line < broken_lines_total);
-}
-
-uint8_t *skip_n_unicode_chars_or_to_eol(int n, const char *source)
-{
-    size_t len = 0;
-    ucs4_t _;
-
-    for (uint8_t * it = (uint8_t *) source; it;
-         it = (uint8_t *) u8_next(&_, it)) {
-        if (len == n) {
-            return it;
-        }
-        len++;
-    }
-    return NULL;
-}
-
-int get_padding(int longest_line, int term_cols)
-{
-    return (term_cols - longest_line) / 2;
-}
-
-int break_lines(const int width)
-{
-    int j = 0;
-
-    int longest_line = 0;
-    for (int i = 0; i < original_lines_total; i++) {
-        int this_len = char_len(original_lines[i]);
-        if (this_len > longest_line) {
-            longest_line = this_len;
-        }
-        char *start = original_lines[i];
-        // printf("start [%d] \r\n", i);
-
-        int bytes_length = strlen(start);
-
-        if (bytes_length == 0) {
-            broken_lines[j][0] = 0;
-            j++;
-        }
-
-        char *last = &(start[bytes_length - 1]);
-
-        while (start <= last) {
-
-            char *finish =
-                (char *) skip_n_unicode_chars_or_to_eol(width, start);
-
-            if (finish == NULL) {
-
-                // printf("FINIS is null \r\n");
-                finish = last + 1;
-            }
-//             endwin();
-//                 printf("FINIS is %lc \r\n", finish[0]);
-// exit(0);
-
-            strncpy(broken_lines[j], start, finish - start);
-            for (int z = 0; z < MAX_LEN; z++)
-                broken_lines[j][z] = 0;
-            strncpy(broken_lines[j], start, finish - start);
-            broken_lines[j][finish - start] = 0;
-
-            j++;
-
-            if (finish == NULL) {
-                start = (char *) skip_n_unicode_chars_or_to_eol(1, finish);
-            } else {
-                start = finish;
-            }
-        }
-    }
-
-    margin = get_padding(longest_line, width);
-    broken_lines_total = j;
-    return j;
-}
-
-void fit_in_available_screen()
-{
-    struct winsize winsz = get_winsize();
-    // printf("running in window size: %d rows / %d columns\n",
-    //         winsz.ws_row, winsz.ws_col);
-
-    int broken_lines_total = break_lines(winsz.ws_col - 1);
-
-    pad = newpad(broken_lines_total, winsz.ws_col - margin);
-
-
-    int chars_in_lines = 0;
-    line = -1;
-    size_t linesize = 0;
-    while (chars_in_lines <= cursor) {
-        line++;
-        linesize = char_len(broken_lines[line]);    // + 1; // because newlines add at least 1
-
-        // printf("Line %d\r\n", line);
-        chars_in_lines += linesize;
-    }
-    int chars_in_previous_lines = chars_in_lines - linesize;
-    // printf("Line %d:%d (%d)\r\n", line, column, cursor );
-    wmove(pad, line, column);
-    column = cursor - chars_in_previous_lines;
-
-    struct winsize w = get_winsize();
-
-    if (line - 1 < w.ws_row) {
-        offset = 0;
-    } else {
-        offset = line - w.ws_row + 1;
-    }
-
-    refresh();
-    prefresh(pad, offset, 0, 0, margin, w.ws_row - 1, w.ws_col - 1);
-
-    print_previous_lines(line);
 }
 
 static void init_colors()
@@ -790,7 +793,7 @@ int main(void)
 
     // getch();
     endwin();
-    printf("Time: %d:%02lu\r\n", minutes, seconds);
+    printf("Time: %d:%02d\r\n", minutes, seconds);
 
     exit(0);
 }
