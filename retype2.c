@@ -1,5 +1,5 @@
 /*
- * gcc -Wall -o retype retype2.c -lutf8proc -lunistring $(ncursesw5-config --cflags --libs)
+ * cc -Wall -ggdb -O0 -o retype retype2.c -lm -lutf8proc -lunistring $(ncursesw5-config --cflags --libs)
  * indent -kr -ts4 -nut -l80 *.c
  * apt install libncursesw5-dev libunistring-dev libutf8proc-dev
  */
@@ -15,6 +15,7 @@
 #include <time.h>
 #include <inttypes.h>
 #include <wchar.h>
+#include <math.h>
 
 #include <unitypes.h>
 #include <uniconv.h>
@@ -53,6 +54,8 @@ char original_lines[MAX_LINES][MAX_LEN];
 char broken_lines[MAX_LINES][MAX_LEN];
 
 int original_lines_total;
+int broken_lines_total;
+
 
 int cursor = 0;
 // 32;
@@ -455,13 +458,17 @@ void overtype_current_line()
         char str[80];
 
         expected_ch = simplify(broken_lines[line], column);
-            sprintf(str, "%lc", expected_ch);
+        sprintf(str, "%lc", expected_ch);
 
         autotext_started =
-            should_autotext(autotext_started, broken_lines[line], column, undostack);
+            should_autotext(autotext_started, broken_lines[line], column,
+                            undostack);
 
-        struct xchar xch = autotext_started 
-        ? (struct xchar){.type = XCH_CHAR, .ch = normalize(expected_ch), .str = str}
+        struct xchar xch = autotext_started ? (struct xchar) {
+            .type = XCH_CHAR,
+            .ch = normalize(expected_ch),
+            .str = str
+        }
         : getxchar_();
 
         len = char_len(broken_lines[line]);
@@ -521,7 +528,6 @@ void overtype_current_line()
                     if (line - offset >= w.ws_row) {
                         offset++;
                     }
-
                     // if (line - 1 < w.ws_row) {
                     //     offset = 0;
                     // } else {
@@ -588,7 +594,7 @@ void overtype_current_line()
         }
 
         fseek(stdin, 0, SEEK_END);
-    } while (true);
+    } while (line < broken_lines_total);
 }
 
 uint8_t *skip_n_unicode_chars_or_to_eol(int n, const char *source)
@@ -664,7 +670,7 @@ int break_lines(const int width)
     }
 
     margin = get_padding(longest_line, width);
-
+    broken_lines_total = j;
     return j;
 }
 
@@ -767,9 +773,24 @@ int main(void)
 
     load_file();
 
+
+    time_t start_time;
+    time_t end_time;
+
+    start_time = time(NULL);
+
     overtype_current_line();
 
-    getch();
+    end_time = time(NULL);
+
+    const double diff_t = difftime(end_time, start_time);
+    const int all_seconds = floor(diff_t);
+    const int minutes = (int) floor(all_seconds / 60);
+    const int seconds = all_seconds % 60;
+
+    // getch();
     endwin();
+    printf("Time: %d:%02lu\r\n", minutes, seconds);
+
     exit(0);
 }
