@@ -1,3 +1,6 @@
 retype
+overtype
 *.c~
-retype.log
+overtype.log
+overtype.pid
+

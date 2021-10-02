@@ -1,9 +1,3 @@
-/*
- * cc -Wall -ggdb -O0 -o retype retype2.c -lm -lutf8proc -lunistring $(ncursesw5-config --cflags --libs)
- * indent -kr -ts4 -nut -l80 *.c
- * apt install libncursesw5-dev libunistring-dev libutf8proc-dev
- */
-
 #include <stdio.h>
 #include <stdint.h>
 #include <locale.h>
@@ -763,6 +757,10 @@ static void load_file()
 
 int main(void)
 {
+    FILE *pidfile = fopen("overtype.pid", "wx");
+    fprintf(pidfile, "%ld", (long) getpid());
+    fclose(pidfile);
+
     signal(SIGWINCH, sig_handler);
 
     // Locale has to be set before the call to iniscr()
