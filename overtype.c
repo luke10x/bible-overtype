@@ -59,6 +59,8 @@ int column = 0;                 // Column under cursor (can also be called "line
 int offset = 0;
 int margin = 0;
 
+struct winsize winsz;
+
 struct xchar {
     uint8_t type;
     wint_t ch;
@@ -314,8 +316,13 @@ struct xchar getxchar_()
 
 struct winsize get_winsize()
 {
-    struct winsize winsz;
-    ioctl(0, TIOCGWINSZ, &winsz);
+    struct winsize new_winsz;
+    ioctl(0, TIOCGWINSZ, &new_winsz);
+
+    if (new_winsz.ws_col != winsz.ws_col || new_winsz.ws_row != winsz.ws_row) {
+        winsz = new_winsz;
+        resized = 1;
+    }
     return winsz;
 }
 
@@ -517,8 +524,6 @@ int break_lines(const int width)
 void fit_in_available_screen()
 {
     struct winsize winsz = get_winsize();
-    // printf("running in window size: %d rows / %d columns\n",
-    //         winsz.ws_row, winsz.ws_col);
 
     int broken_lines_total = break_lines(winsz.ws_col - 1);
 
@@ -542,10 +547,16 @@ void fit_in_available_screen()
 
     struct winsize w = get_winsize();
 
-    if (line - 1 < w.ws_row) {
-        offset = 0;
-    } else {
+    // if (line - 1 < w.ws_row) {
+    //     offset = 0;
+    // } else {
+    //     offset = line - w.ws_row + 1;
+    // }
+
+    if (line - offset >= w.ws_row) {
         offset = line - w.ws_row + 1;
+    } else {
+        offset = 0;
     }
 
     refresh();
@@ -588,42 +599,18 @@ void overtype_current_line()
         len = char_len(broken_lines[line]);
 
         switch (xch.type) {
-        case XCH_CHAR:
-            if (is_same(expected_ch, xch) && undostack == NULL) {
-                write_here(GOOD_PAIR, str);
-
-                cursor++;
-                column++;
-            } else {
-                if (margin + column + undostack_size >= w.ws_col - 1)
-                    break;
-
-                const struct xchar good_ch =
-                    (column < char_len(broken_lines[line]))
-                ? (struct xchar) {.type = XCH_CHAR,.ch = '$',.str = str }
-                : xch;
-
-                struct charstack *nptr = malloc(sizeof(struct charstack));
-                nptr->ch = good_ch;
-                nptr->next = undostack;
-                undostack = nptr;
-                undostack_size++;
-
-                write_here(ERROR_PAIR, xch.str);
-            }
-
-            if (column == len) {
-                break;          // this is it done. Add nothing to this line...
-            }
-
-            break;
         case XCH_SPECIAL:
             switch (xch.ch) {
             case XCH_KEY_ESC:
                 endwin();
                 exit(0);
                 break;
+            case XCH_KEY_RESIZE:
+                fit_in_available_screen();
+
+                break;
             case XCH_KEY_NEWLINE:
+
                 if (column == len && undostack == 0) {
                     // cursor++;
                     line++;
@@ -635,21 +622,26 @@ void overtype_current_line()
                     print_grey(line, column, broken_lines[line]);
                     wmove(pad, line, 0);
 
-                    refresh();
                     struct winsize w = get_winsize();
 
 
                     if (line - offset >= w.ws_row) {
-                        offset++;
+                        offset = line - w.ws_row + 1;
                     }
+
+                    wmove(pad, line, 0);
+
                     // if (line - 1 < w.ws_row) {
                     //     offset = 0;
                     // } else {
                     //     offset = line - w.ws_row + 1;
                     // }
 
+                    refresh();
+
                     prefresh(pad, offset, 0, 0, margin, w.ws_row - 1,
                              w.ws_col - 1);
+
                 } else if (column < len) {
 
 
@@ -696,14 +688,42 @@ void overtype_current_line()
                 prefresh(pad, offset, 0, 0, margin, w.ws_row - 1, w.ws_col - 1);
 
                 break;
-            case XCH_KEY_RESIZE:
-                fit_in_available_screen();
-
-                break;
 
             default:
                 printf("Special: %d \r\n", xch.ch);
             }
+            break;
+
+        case XCH_CHAR:
+            if (is_same(expected_ch, xch) && undostack == NULL) {
+                write_here(GOOD_PAIR, str);
+
+                cursor++;
+                column++;
+            } else {
+                if (margin + column + undostack_size >= w.ws_col - 1)
+                    break;
+
+                const struct xchar good_ch =
+                    (column < char_len(broken_lines[line]))
+                ? (struct xchar) {.type = XCH_CHAR,.ch = '$',.str = str }
+                : xch;
+
+                struct charstack *nptr = malloc(sizeof(struct charstack));
+                nptr->ch = good_ch;
+                nptr->next = undostack;
+                undostack = nptr;
+                undostack_size++;
+
+                write_here(ERROR_PAIR, xch.str);
+            }
+
+            if (column == len) {
+                break;          // this is it done. Add nothing to this line...
+            }
+
+            break;
+
             break;
         }
 
