@@ -348,14 +348,19 @@ int is_same(uint32_t expected, struct xchar pressed)
     return FALSE;
 }
 
+void soft_refresh() {
+    refresh();
+    struct winsize w = get_winsize();
+    prefresh(pad, offset, 0, 0, margin, w.ws_row - 1, w.ws_col - 1);
+}
+
 void write_here(int color_pair, char *str)
 {
     wattron(pad, COLOR_PAIR(color_pair));
     waddstr(pad, str);
     wattroff(pad, COLOR_PAIR(color_pair));
-    refresh();
-    struct winsize w = get_winsize();
-    prefresh(pad, offset, 0, 0, margin, w.ws_row - 1, w.ws_col - 1);
+    // recalculate_offset();
+    soft_refresh();
 }
 
 void print_previous_lines(int number_of_lines)
@@ -363,16 +368,12 @@ void print_previous_lines(int number_of_lines)
     wclear(pad);
     wmove(pad, 0, 0);
 
-    struct winsize w = get_winsize();
-
-    refresh();
-    prefresh(pad, offset, 0, 0, margin, w.ws_row - 1, w.ws_col - 1);
-
+    soft_refresh();
+    
     for (int i = 0; i < line; i++) {
         print_good(i, 0, broken_lines[i]);
 
-        refresh();
-        prefresh(pad, offset, 0, 0, margin, w.ws_row - 1, w.ws_col - 1);
+        soft_refresh();
     }
     print_good(line, 0, broken_lines[line]);
 
@@ -394,8 +395,7 @@ void print_previous_lines(int number_of_lines)
     print_grey(line, column, output);
     wmove(pad, line, column);
 
-    refresh();
-    prefresh(pad, offset, 0, 0, margin, w.ws_row - 1, w.ws_col - 1);
+    soft_refresh();
 }
 
 int this_is_lnumber_start(const char *line, int typed)
@@ -521,6 +521,16 @@ int break_lines(const int width)
     return j;
 }
 
+void recalculate_offset() {
+    struct winsize winsz = get_winsize();
+
+    if (line - offset >= winsz.ws_row) {
+        offset = line - winsz.ws_row + 1;
+    } else {
+        offset = 0;
+    }
+}
+
 void fit_in_available_screen()
 {
     struct winsize winsz = get_winsize();
@@ -529,7 +539,6 @@ void fit_in_available_screen()
 
     pad = newpad(broken_lines_total, winsz.ws_col - margin);
 
-
     int chars_in_lines = 0;
     line = -1;
     size_t linesize = 0;
@@ -537,43 +546,26 @@ void fit_in_available_screen()
         line++;
         linesize = char_len(broken_lines[line]);    // + 1; // because newlines add at least 1
 
-        // printf("Line %d\r\n", line);
         chars_in_lines += linesize;
     }
     int chars_in_previous_lines = chars_in_lines - linesize;
-    // printf("Line %d:%d (%d)\r\n", line, column, cursor );
     wmove(pad, line, column);
     column = cursor - chars_in_previous_lines;
 
-    struct winsize w = get_winsize();
-
-    // if (line - 1 < w.ws_row) {
-    //     offset = 0;
-    // } else {
-    //     offset = line - w.ws_row + 1;
-    // }
-
-    if (line - offset >= w.ws_row) {
-        offset = line - w.ws_row + 1;
-    } else {
-        offset = 0;
-    }
-
-    refresh();
-    prefresh(pad, offset, 0, 0, margin, w.ws_row - 1, w.ws_col - 1);
+    recalculate_offset();
+    soft_refresh();
 
     print_previous_lines(line);
 }
+
 
 void overtype_current_line()
 {
     struct charstack *undostack = NULL;
 
     wmove(pad, line, column);
-    refresh();
-
-    struct winsize w = get_winsize();
-    prefresh(pad, offset, 0, 0, margin, w.ws_row - 1, w.ws_col - 1);
+    
+    soft_refresh();
 
     bool autotext_started = false;
     do {
@@ -617,17 +609,14 @@ void overtype_current_line()
                     column = 0;
                     // now move the visual cursor down, but first scol a bit if necessary
 
+                    recalculate_offset();
+
+                    soft_refresh();
+
                     // ok move the cursor now
                     // wmove(pad, line - offset, 0);
                     print_grey(line, column, broken_lines[line]);
                     wmove(pad, line, 0);
-
-                    struct winsize w = get_winsize();
-
-
-                    if (line - offset >= w.ws_row) {
-                        offset = line - w.ws_row + 1;
-                    }
 
                     wmove(pad, line, 0);
 
@@ -637,13 +626,9 @@ void overtype_current_line()
                     //     offset = line - w.ws_row + 1;
                     // }
 
-                    refresh();
-
-                    prefresh(pad, offset, 0, 0, margin, w.ws_row - 1,
-                             w.ws_col - 1);
+                    soft_refresh();
 
                 } else if (column < len) {
-
 
                     // const struct xchar good_ch = (column < char_len(line))
                     //     ? (struct xchar) { .type = XCH_CHAR, .ch = '$', .str = str }
@@ -684,9 +669,7 @@ void overtype_current_line()
 
                 wmove(pad, line, last_char_pos);
 
-                refresh();
-                prefresh(pad, offset, 0, 0, margin, w.ws_row - 1, w.ws_col - 1);
-
+                soft_refresh();
                 break;
 
             default:
@@ -701,7 +684,7 @@ void overtype_current_line()
                 cursor++;
                 column++;
             } else {
-                if (margin + column + undostack_size >= w.ws_col - 1)
+                if (margin + column + undostack_size >= winsz.ws_col - 1)
                     break;
 
                 const struct xchar good_ch =
@@ -811,3 +794,4 @@ int main(void)
 
     exit(0);
 }
+
