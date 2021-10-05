@@ -344,8 +344,10 @@ int is_same(uint32_t expected, struct xchar pressed)
 }
 
 void soft_refresh() {
+
     refresh();
     struct winsize w = get_winsize();
+
     prefresh(pad, offset, 0, 0, margin, w.ws_row - 1, w.ws_col - 1);
 }
 
@@ -364,15 +366,16 @@ void print_previous_lines(int number_of_lines)
     wclear(pad);
     wmove(pad, 0, 0);
 
+    recalculate_offset();
     soft_refresh();
     
     for (int i = 0; i < line; i++) {
 
-
-        // print_good(i, 0, broken_lines[i]);
+        print_good(i, 0, broken_lines[i]);
         soft_refresh();
 
     }
+    
     print_good(line, 0, broken_lines[line]);
 
     wmove(pad, line, column);
@@ -393,6 +396,7 @@ void print_previous_lines(int number_of_lines)
     print_grey(line, column, output);
     wmove(pad, line, column);
 
+    // recalculate_offset();
     soft_refresh();
 }
 
@@ -562,6 +566,9 @@ void fit_in_available_screen()
 
     print_previous_lines(line);
 
+
+    recalculate_offset();
+    soft_refresh();
 }
 
 
