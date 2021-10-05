@@ -168,15 +168,12 @@ struct xchar getxchar()
             return (struct xchar) {.type = XCH_SPECIAL,.ch = XCH_KEY_RESIZE };
         }
 
-        halfdelay(1);
+        halfdelay(5);
         ch = getch();
 
         if (ch == 255) {
             continue;
         }
-
-        if (ch == 255)
-            ch = getch();       // FIXME where is this coming from? If ever..
 
         int seventh = (ch >> 7) & 1;
         int sixth = (ch >> 6) & 1;
@@ -257,8 +254,6 @@ struct xchar getxchar()
         return (struct xchar) {.type = XCH_CHAR,.ch = ch,.str = str };
     }
     while (ch == ERR || ch == KEY_RESIZE);
-
-
 
     return (struct xchar) {.type = XCH_ALT,.ch = '2',.str = "2" };
 }
@@ -356,6 +351,7 @@ void soft_refresh() {
 
 void write_here(int color_pair, char *str)
 {
+
     wattron(pad, COLOR_PAIR(color_pair));
     waddstr(pad, str);
     wattroff(pad, COLOR_PAIR(color_pair));
@@ -371,9 +367,11 @@ void print_previous_lines(int number_of_lines)
     soft_refresh();
     
     for (int i = 0; i < line; i++) {
-        print_good(i, 0, broken_lines[i]);
 
+
+        // print_good(i, 0, broken_lines[i]);
         soft_refresh();
+
     }
     print_good(line, 0, broken_lines[line]);
 
@@ -537,7 +535,13 @@ void fit_in_available_screen()
 
     int broken_lines_total = break_lines(winsz.ws_col - 1);
 
+    clear();
+    
     pad = newpad(broken_lines_total, winsz.ws_col - margin);
+    recalculate_offset();
+    soft_refresh();
+
+    wmove(pad, line, column);
 
     int chars_in_lines = 0;
     line = -1;
@@ -549,13 +553,15 @@ void fit_in_available_screen()
         chars_in_lines += linesize;
     }
     int chars_in_previous_lines = chars_in_lines - linesize;
-    wmove(pad, line, column);
+    
     column = cursor - chars_in_previous_lines;
+    wmove(pad, line, column);
 
     recalculate_offset();
     soft_refresh();
 
     print_previous_lines(line);
+
 }
 
 
@@ -565,6 +571,7 @@ void overtype_current_line()
 
     wmove(pad, line, column);
     
+    recalculate_offset();
     soft_refresh();
 
     bool autotext_started = false;
@@ -580,6 +587,10 @@ void overtype_current_line()
         autotext_started =
             should_autotext(autotext_started, broken_lines[line], column,
                             undostack);
+
+
+    // recalculate_offset();
+    // soft_refresh();
 
         struct xchar xch = autotext_started ? (struct xchar) {
             .type = XCH_CHAR,
@@ -602,49 +613,20 @@ void overtype_current_line()
 
                 break;
             case XCH_KEY_NEWLINE:
-
                 if (column == len && undostack == 0) {
-                    // cursor++;
+                    
                     line++;
                     column = 0;
-                    // now move the visual cursor down, but first scol a bit if necessary
-
-                    recalculate_offset();
-
-                    soft_refresh();
-
-                    // ok move the cursor now
-                    // wmove(pad, line - offset, 0);
                     print_grey(line, column, broken_lines[line]);
                     wmove(pad, line, 0);
 
-                    wmove(pad, line, 0);
-
-                    // if (line - 1 < w.ws_row) {
-                    //     offset = 0;
-                    // } else {
-                    //     offset = line - w.ws_row + 1;
-                    // }
-
+                    recalculate_offset();
                     soft_refresh();
 
-                } else if (column < len) {
-
-                    // const struct xchar good_ch = (column < char_len(line))
-                    //     ? (struct xchar) { .type = XCH_CHAR, .ch = '$', .str = str }
-                    //     : xch;
-                    // struct charstack *nptr = malloc(sizeof(struct charstack));
-                    // nptr->ch = good_ch;
-                    // nptr->next = undostack;
-                    // undostack = nptr;
-                    // undostack_size++;
-
-                    // write_here(ERROR_PAIR, "¶");
                 }
 
                 break;
             case XCH_KEY_BACKSPACE:
-                // printf("<Backspace> \r\n");
                 if (undostack == NULL) {
                     continue;
                 }
@@ -701,17 +683,12 @@ void overtype_current_line()
                 write_here(ERROR_PAIR, xch.str);
             }
 
-            if (column == len) {
-                break;          // this is it done. Add nothing to this line...
-            }
-
             break;
 
-            break;
         }
 
-        fseek(stdin, 0, SEEK_END);
     } while (line < broken_lines_total);
+
 }
 
 static void init_colors()
@@ -789,6 +766,9 @@ int main(void)
     const int minutes = (int) floor(all_seconds / 60);
     const int seconds = all_seconds % 60;
 
+    printf("Time: %d:%02d\r\n", minutes, seconds);
+    nocbreak();
+    getch();
     endwin();
     printf("Time: %d:%02d\r\n", minutes, seconds);
 
