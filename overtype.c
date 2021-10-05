@@ -76,7 +76,7 @@ int offset = 0;                 // How many lines are hidden in the beginning
 
 int margin = 0;                 // how many columns it is pushed off the left
 			        // (In order to center when text has short lines)
-
+int d1 = 0;
 static volatile int resized = 1;
 
 struct charstack *undostack = NULL;
@@ -107,7 +107,11 @@ static void sig_handler(int sig)
 {
     signal(SIGWINCH, SIG_IGN);
     if (SIGWINCH == sig) {
-        resized = 1;
+        // resized = 1;
+        // char ch = getch();
+        // printf("tesize char %d \r\n", ch);
+        // endwin;
+        // exit(1);
     }
     signal(SIGWINCH, sig_handler);
 }
@@ -163,6 +167,17 @@ const uint32_t simplify(const char *input, const int index)
     return unicode;
 }
 
+void get_winsize()
+{
+    struct winsize new_winsz;
+    ioctl(0, TIOCGWINSZ, &new_winsz);
+
+    if (new_winsz.ws_col != winsz.ws_col || new_winsz.ws_row != winsz.ws_row) {
+        winsz = new_winsz;
+        resized = 1;
+    }
+}
+
 /**
  * Values to test it with: ė
  */
@@ -170,8 +185,21 @@ struct xchar getxchar()
 {
     uint8_t ch;
     do {
+
+        get_winsize();
         if (resized) {
             resized = 0;
+
+
+
+            // d1++;
+            // if (d1 > 1) {
+            //     printf("signal handled_%d_time: \r\n" , d1); 
+            //     // nocbreak();
+            //     // ch = getch();
+            //     // printf("char handled_%d_time: \r\n" , d1); 
+
+            // }
             return (struct xchar) {.type = XCH_SPECIAL,.ch = XCH_KEY_RESIZE };
         }
 
@@ -180,6 +208,9 @@ struct xchar getxchar()
 
         if (ch == 255) {
             continue;
+        }
+        if (ch == 154) {
+            continue; // Dismiss resize artifact
         }
 
         int seventh = (ch >> 7) & 1;
@@ -192,7 +223,6 @@ struct xchar getxchar()
             pending_char[3] = 0;
             pending_curr = 1;
 
-            // printf("zeroth byte %d \r\n", ch);
             int flags = fcntl(STDIN_FILENO, F_GETFL, 0);
             fcntl(STDIN_FILENO, F_SETFL, flags | O_NONBLOCK);
             do {
@@ -316,18 +346,6 @@ struct xchar getxchar_()
     return xch;
 }
 
-struct winsize get_winsize()
-{
-    struct winsize new_winsz;
-    ioctl(0, TIOCGWINSZ, &new_winsz);
-
-    if (new_winsz.ws_col != winsz.ws_col || new_winsz.ws_row != winsz.ws_row) {
-        winsz = new_winsz;
-        resized = 1;
-    }
-    return winsz;
-}
-
 int is_same(uint32_t expected, struct xchar pressed)
 {
     if (expected == 10 && expected == 0) {
@@ -351,8 +369,6 @@ int is_same(uint32_t expected, struct xchar pressed)
 
 
 void recalculate_offset() {
-    struct winsize winsz = get_winsize();
-
     if (line - offset >= winsz.ws_row) {
         offset = line - winsz.ws_row + 1;
     } else {
@@ -361,11 +377,8 @@ void recalculate_offset() {
 }
 
 void soft_refresh() {
-
     refresh();
-    struct winsize w = get_winsize();
-
-    prefresh(pad, offset, 0, 0, margin, w.ws_row - 1, w.ws_col - 1);
+    prefresh(pad, offset, 0, 0, margin, winsz.ws_row - 1, winsz.ws_col - 1);
 }
 
 void write_here(int color_pair, char *str)
@@ -374,7 +387,6 @@ void write_here(int color_pair, char *str)
     waddstr(pad, str);
     wattroff(pad, COLOR_PAIR(color_pair));
 
-    // recalculate_offset();
     soft_refresh();
 }
 
@@ -413,7 +425,6 @@ void print_previous_lines(int number_of_lines)
     print_grey(line, column, output);
     wmove(pad, line, column);
 
-    // recalculate_offset();
     soft_refresh();
 }
 
@@ -536,8 +547,6 @@ int break_lines(const int width)
 
 void fit_in_available_screen()
 {
-    struct winsize winsz = get_winsize();
-
     int broken_lines_total = break_lines(winsz.ws_col - 1);
 
     clear();
@@ -594,9 +603,6 @@ void overtype_current_line()
             should_autotext(autotext_started, broken_lines[line], column,
                             undostack);
 
-    // recalculate_offset();
-    // soft_refresh();
-
         struct xchar xch = autotext_started ? (struct xchar) {
             .type = XCH_CHAR,
             .ch = normalize(expected_ch),
@@ -611,6 +617,19 @@ void overtype_current_line()
             switch (xch.ch) {
             case XCH_KEY_ESC:
                 endwin();
+
+                while (undostack) {
+
+                    // Pop from undo stack
+                    struct charstack *temp;
+                    temp = undostack;
+                    undostack = undostack->next;
+                    undostack_size--;
+
+                    printf("Undo: %s ,'%c' %p (%d), len = %zu\r\n",
+                        temp->ch.str, temp->ch.ch, temp->ch.str,temp->ch.ch, strlen(temp->ch.str));
+                }
+
                 exit(0);
                 break;
             case XCH_KEY_RESIZE:
@@ -665,6 +684,9 @@ void overtype_current_line()
             break;
 
         case XCH_CHAR:
+            if (strlen(xch.str) == 0) {
+                continue;
+            }
             if (is_same(expected_ch, xch) && undostack == NULL) {
                 write_here(GOOD_PAIR, str);
 
@@ -674,10 +696,10 @@ void overtype_current_line()
                 if (margin + column + undostack_size >= winsz.ws_col - 1)
                     break;
 
-                const struct xchar good_ch =
-                    (column < char_len(broken_lines[line]))
-                ? (struct xchar) { .type = XCH_CHAR,.ch = '$',.str = str }
-                : xch;
+                const struct xchar good_ch = xch;
+                //     (column < char_len(broken_lines[line]))
+                // ? (struct xchar) { .type = XCH_CHAR,.ch = '$',.str = str }
+                // : xch;
 
                 struct charstack *nptr = malloc(sizeof(struct charstack));
                 nptr->ch = good_ch;
@@ -742,7 +764,7 @@ int main(void)
     fprintf(pidfile, "%ld", (long) getpid());
     fclose(pidfile);
 
-    signal(SIGWINCH, sig_handler);
+    // signal(SIGWINCH, sig_handler);
 
     // Locale has to be set before the call to iniscr()
     setlocale(LC_ALL, "");
