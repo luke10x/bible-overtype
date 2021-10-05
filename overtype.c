@@ -566,7 +566,6 @@ void fit_in_available_screen()
 
     print_previous_lines(line);
 
-
     recalculate_offset();
     soft_refresh();
 }
@@ -618,7 +617,7 @@ void overtype_current_line()
             case XCH_KEY_RESIZE:
                 fit_in_available_screen();
 
-                break;
+                continue;
             case XCH_KEY_NEWLINE:
                 if (column == len && undostack == 0) {
                     
