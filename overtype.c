@@ -40,42 +40,52 @@
 #define MAX_LEN 81
 #define MAX_LINES 99999
 
-FILE *logger;
-
-WINDOW *pad;
-
-char original_lines[MAX_LINES][MAX_LEN];
-char broken_lines[MAX_LINES][MAX_LEN];
-
-int original_lines_total;
-int broken_lines_total;
-
-
-int cursor = 0;
-// 32;
-// 200;
-int line = 0;                   // Line under cursor
-int column = 0;                 // Column under cursor (can also be called "line cursor")
-int offset = 0;
-int margin = 0;
-
-struct winsize winsz;
-
 struct xchar {
     uint8_t type;
     wint_t ch;
     char *str;
 };
 
-static volatile int resized = 1;
-
 struct charstack {
     struct xchar ch;
     struct charstack *next;
 };
 
+FILE *logger;
+
+WINDOW *pad;
+
+char original_lines[MAX_LINES][MAX_LEN];
+
+char broken_lines[MAX_LINES][MAX_LEN];
+
+int original_lines_total;
+
+int broken_lines_total;
+
+struct winsize winsz;
+
+int cursor = 0;                 // Curent character in the file
+// 32;
+// 200;
+int line = 0;                   // Line under cursor
+
+int column = 0;                 // Column under cursor
+                                // (can also be called "line cursor")
+int offset = 0;                 // How many lines are hidden in the beginning
+
+int margin = 0;                 // how many columns it is pushed off the left
+			        // (In order to center when text has short lines)
+
+static volatile int resized = 1;
+
 struct charstack *undostack = NULL;
+
 int undostack_size = 0;
+
+uint8_t pending_char[4] = { 0, 0, 0, 0 }; // These are variables for getxchar()
+					  // Perhaps they can go into the function itself
+int pending_curr = 0;
 
 void print_grey(const int row, const int col, const char *line)
 {
@@ -156,9 +166,6 @@ const uint32_t simplify(const char *input, const int index)
 /**
  * Values to test it with: ė
  */
-uint8_t pending_char[4] = { 0, 0, 0, 0 };
-
-int pending_curr = 0;
 struct xchar getxchar()
 {
     uint8_t ch;
@@ -334,13 +341,23 @@ int is_same(uint32_t expected, struct xchar pressed)
         uint8_t n_expected = normalize(expected);
         uint8_t n_pressed = normalize(simplify(pressed.str, 0));
 
-        // printf("eq(%d, %d)\r\n", n_expected, n_pressed);
         if (n_expected == n_pressed) {
             return TRUE;
         }
     }
 
     return FALSE;
+}
+
+
+void recalculate_offset() {
+    struct winsize winsz = get_winsize();
+
+    if (line - offset >= winsz.ws_row) {
+        offset = line - winsz.ws_row + 1;
+    } else {
+        offset = 0;
+    }
 }
 
 void soft_refresh() {
@@ -353,10 +370,10 @@ void soft_refresh() {
 
 void write_here(int color_pair, char *str)
 {
-
     wattron(pad, COLOR_PAIR(color_pair));
     waddstr(pad, str);
     wattroff(pad, COLOR_PAIR(color_pair));
+
     // recalculate_offset();
     soft_refresh();
 }
@@ -477,7 +494,6 @@ int break_lines(const int width)
             longest_line = this_len;
         }
         char *start = original_lines[i];
-        // printf("start [%d] \r\n", i);
 
         int bytes_length = strlen(start);
 
@@ -494,13 +510,8 @@ int break_lines(const int width)
                 (char *) skip_n_unicode_chars_or_to_eol(width, start);
 
             if (finish == NULL) {
-
-                // printf("FINIS is null \r\n");
                 finish = last + 1;
             }
-//             endwin();
-//                 printf("FINIS is %lc \r\n", finish[0]);
-// exit(0);
 
             strncpy(broken_lines[j], start, finish - start);
             for (int z = 0; z < MAX_LEN; z++)
@@ -521,16 +532,6 @@ int break_lines(const int width)
     margin = get_padding(longest_line, width);
     broken_lines_total = j;
     return j;
-}
-
-void recalculate_offset() {
-    struct winsize winsz = get_winsize();
-
-    if (line - offset >= winsz.ws_row) {
-        offset = line - winsz.ws_row + 1;
-    } else {
-        offset = 0;
-    }
 }
 
 void fit_in_available_screen()
@@ -570,7 +571,6 @@ void fit_in_available_screen()
     soft_refresh();
 }
 
-
 void overtype_current_line()
 {
     struct charstack *undostack = NULL;
@@ -593,7 +593,6 @@ void overtype_current_line()
         autotext_started =
             should_autotext(autotext_started, broken_lines[line], column,
                             undostack);
-
 
     // recalculate_offset();
     // soft_refresh();
@@ -677,7 +676,7 @@ void overtype_current_line()
 
                 const struct xchar good_ch =
                     (column < char_len(broken_lines[line]))
-                ? (struct xchar) {.type = XCH_CHAR,.ch = '$',.str = str }
+                ? (struct xchar) { .type = XCH_CHAR,.ch = '$',.str = str }
                 : xch;
 
                 struct charstack *nptr = malloc(sizeof(struct charstack));
@@ -690,7 +689,6 @@ void overtype_current_line()
             }
 
             break;
-
         }
 
     } while (line < broken_lines_total);
@@ -730,9 +728,6 @@ static void load_file()
             perror("Failed file too long");
             exit(1);
         }
-        // if (strlen(buffer) > longest_line) {
-        //     longest_line = strlen(buffer);
-        // }
     }
     fclose(fp);
 
