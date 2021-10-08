@@ -329,7 +329,6 @@ int main(void)
 
     get_winsize();
 
-    redraw();
     halfdelay(5);
 
     while ((ch = getch()) != ' ') {
