@@ -1,5 +1,5 @@
-retype
 overtype
+bible
 *.c~
 overtype.log
 overtype.pid

@@ -1,8 +1,11 @@
 overtype:
 	cc -Wall -ggdb -O0 -o overtype overtype.c -lm -lutf8proc -lunistring $$(ncursesw5-config --cflags --libs)
 
+bible:
+	cc -Wall -ggdb -O0 -o bible bible.c $$(ncursesw5-config --cflags --libs)
+
 clean:
-	rm -f overtype overtype.pid *.c~
+	rm -f overtype overtype.pid bible *.c~
 
 indent:
 	indent -kr -ts4 -nut -l80 *.c
