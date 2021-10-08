@@ -30,6 +30,7 @@ WINDOW *bar;
 int selected = 0;
 int old_selected = 0;
 int padding = 0;
+int vpadding = 0;
 int height;
 char message[100];
 int delta = 0;
@@ -138,7 +139,13 @@ void write_here(const int row, const int col, int color_pair, char *str)
     refresh();
 
     wrefresh(pad);
-    prefresh(pad, 0, 0, 0, padding, winsz.ws_row - 1, winsz.ws_col - padding);
+    prefresh(pad,
+             0,
+             0,
+             vpadding,
+             padding,
+             winsz.ws_row - 1 - vpadding,
+             winsz.ws_col - padding);
     // prefresh(pad, 0,0,0,0, winsz.ws_row-1, pad_width);
 }
 
@@ -171,7 +178,7 @@ static void init_colors()
     start_color();
     init_pair(PAIR_STATUS, COLOR_RED, 0);
     init_pair(PAIR_BOOK, COLOR_GREEN + 8, COLOR_BLACK);
-    init_pair(PAIR_BOOK_SELECTED, COLOR_GREEN + 8, COLOR_GREEN);
+    init_pair(PAIR_BOOK_SELECTED, COLOR_BLACK, COLOR_GREEN);
     init_pair(PAIR_BOOK_HIGHLIGHT, COLOR_GREEN + 8, COLOR_BLACK);
     init_pair(PAIR_BOOK_DISABLED, COLOR_GREEN + 8, COLOR_BLACK);
     init_pair(PAIR_BOOK_SECTION, COLOR_WHITE + 8, 0);
@@ -257,6 +264,8 @@ void drawBooks()
         }
     }
 
+    vpadding = (int)((winsz.ws_row - height) / 2);
+
     pad = newpad(winsz.ws_row - 1, winsz.ws_col);
     scrollok(pad, 1);
     wclear(pad);
@@ -334,6 +343,7 @@ int main(void)
             
         old_selected = selected;
         int old_delta = delta;
+
         if (ch == 2) {
             if ((selected % height) < height - 1 && (selected + 1) < NUMBER_OF_BOOKS) {
                 selected++;
