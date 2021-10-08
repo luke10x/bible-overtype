@@ -28,10 +28,13 @@ int resized;
 WINDOW *pad;
 WINDOW *bar;
 int selected = 0;
+int old_selected = 0;
 int padding = 0;
 int height;
 char message[100];
 int delta = 0;
+int pad_width;
+int visible_columns;
 
 
 struct book books[NUMBER_OF_BOOKS] = {
@@ -123,7 +126,6 @@ void get_winsize()
     }
 }
 
-int pad_width;
 void write_here(const int row, const int col, int color_pair, char *str)
 {
     wmove(pad, row, col);
@@ -199,15 +201,36 @@ void draw_one_book(int y, int x, struct book book) {
         return;
     }
     sprintf(s, "%2d. %-15s", book.id, book.title);
-    
 
     int color_pair = PAIR_BOOK;
     if (book.id - 1 == selected) {
         color_pair = PAIR_BOOK_SELECTED;
     }
+
     write_here(y, x * BOOK_FORMAT_LEN, color_pair, s);
 }
 
+void recalculate_height() {
+    visible_columns = ((int) (winsz.ws_col / BOOK_FORMAT_LEN) - 1);
+    if ((winsz.ws_col % BOOK_FORMAT_LEN) > 0) {
+        visible_columns++;
+    }
+
+    height = (int) (NUMBER_OF_BOOKS / visible_columns);
+    if ((NUMBER_OF_BOOKS % visible_columns) > 0) {
+        height++;
+    }
+    if (height > winsz.ws_row - 1) {
+        height = winsz.ws_row - 1;
+    }
+
+    while (((int)(selected / height)) >= ((int)(delta + visible_columns))) {
+        delta++;
+    }
+    while (((int)(selected / height)) < delta) {
+        delta--;
+    }
+}
 /**
  * In order to reach the the last books with less selector move
  * we try to have as many columns as the sreen allows.
@@ -220,18 +243,6 @@ void draw_one_book(int y, int x, struct book book) {
  */
 void drawBooks()
 {
-    int visible_columns = (int) (winsz.ws_col / BOOK_FORMAT_LEN) - 1;
-    // if (visible_columns > 6) visible_columns = 6;
-    if ((winsz.ws_col % BOOK_FORMAT_LEN) > 0) {
-        visible_columns++;
-    }
-    height = (int) (NUMBER_OF_BOOKS / visible_columns);
-    if ((NUMBER_OF_BOOKS % visible_columns) > 0) {
-        height++;
-    }
-    if (height > winsz.ws_row - 1) {
-        height = winsz.ws_row - 1;
-    }
     int columns = (int) (NUMBER_OF_BOOKS / height) + 1;
 
     delwin(pad);
@@ -250,13 +261,6 @@ void drawBooks()
     scrollok(pad, 1);
     wclear(pad);
 
-    while (((int)(selected / height)) >= ((int)(delta + visible_columns))) {
-        delta++;
-    }
-    while (((int)(selected / height)) < delta) {
-        delta--;
-    }
-
     // while ()
     int i = delta * height;
     for (int x = 0; x < visible_columns; x++) {
@@ -270,7 +274,7 @@ void drawBooks()
     }
 
     char s[100];
-    sprintf((char *)&s, "condition %d ; ;", delta);
+    sprintf((char *)&s, "vc %d ; ;", visible_columns);
     write_here(4, 2, PAIR_STATUS, s);
 
     ///////////////////////////////
@@ -280,10 +284,26 @@ void drawBooks()
     // write_here(2, 2, PAIR_STATUS, s);
 }
 
+void fast_draw_books() {
+    int y = selected % height;
+    int x = (int)(selected / height) - delta;
+    draw_one_book(y, x, books[selected]);
+
+    y = old_selected % height;
+    x = (int)(old_selected / height) - delta;
+    draw_one_book(y, x, books[old_selected]);
+}
+
 void redraw()
 {
     drawBooks();
+    formatBottomLine();
+}
 
+
+void fast_redraw()
+{
+    fast_draw_books();
     formatBottomLine();
 }
 
@@ -312,7 +332,8 @@ int main(void)
         if ((ch == 255) && !resized)
             continue;
             
-
+        old_selected = selected;
+        int old_delta = delta;
         if (ch == 2) {
             if ((selected % height) < height - 1 && (selected + 1) < NUMBER_OF_BOOKS) {
                 selected++;
@@ -336,9 +357,16 @@ int main(void)
             }
         }
 
-        resized = 0;
-        clear();
-        redraw();
+        recalculate_height();
+        if (resized || (old_delta != delta)) {
+            resized = 0;
+            clear();
+            redraw();
+            // old_selected = selected;
+        } else  {
+            fast_redraw();
+        } 
+
     }
 
     nocbreak();
