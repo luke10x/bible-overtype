@@ -41,7 +41,7 @@ char search[20];
 int search_len = 0;
 
 
-struct book books[NUMBER_OF_BOOKS] = {
+struct book all_books[NUMBER_OF_BOOKS] = {
     // {.id = 0,.title = "The Law" },
     {.id = 1,.title = "Genesis" },
     {.id = 2,.title = "Exodus" },
@@ -118,6 +118,8 @@ struct book books[NUMBER_OF_BOOKS] = {
     {.id = 65,.title = "Jude" },
     {.id = 66,.title = "Revelation" }
 };
+struct book books[NUMBER_OF_BOOKS];
+int books_len = 0;
 
 void get_winsize()
 {
@@ -319,6 +321,21 @@ void fast_redraw()
     formatBottomLine();
 }
 
+filter_books() {
+    books_len = 0;
+    for (int i = 0; i < NUMBER_OF_BOOKS; i++) {
+        char book_label[20];
+
+        sprintf((char *)&book_label, "%2d. %-15s", all_books[i].id, all_books[i].title);
+
+        char * found = strstr((char *)&book_label, (char *)&search);
+        if (found != NULL) {
+            books[books_len] = all_books[i];
+            books_len++;
+        }
+    }
+}
+
 int main(void)
 {
     // Locale has to be set before the call to iniscr()
@@ -329,8 +346,10 @@ int main(void)
     cbreak();
     noecho();
     init_colors();
-
+    
     get_winsize();
+
+    filter_books();
 
     halfdelay(5);
 
@@ -374,10 +393,12 @@ int main(void)
         if (ch > '0' && ch < 'z' && (strlen(search) < 20)) {
             search[search_len] = ch;
             search_len++;
+            filter_books();
         }
         if ((ch == 7 || ch == 8) && (strlen(search) > 0)) {
             search[search_len] = 0;
             search_len--;
+            filter_books();
         }
 
         recalculate_height();
