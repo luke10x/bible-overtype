@@ -4,14 +4,17 @@
 #include <sys/ioctl.h>
 #include <signal.h>
 #include <fcntl.h>
+#include <string.h>
+#include<ctype.h>
 
-#define PAIR_STATUS         1
-#define PAIR_BOOK           2
-#define PAIR_BOOK_SELECTED  3
-#define PAIR_BOOK_HIGHLIGHT 4
-#define PAIR_BOOK_DISABLED  5
-#define PAIR_BOOK_SECTION   6
-#define PAIR_SEARCH         7
+#define PAIR_STATUS           1
+#define PAIR_BOOK             2
+#define PAIR_BOOK_SELECTED    3
+#define PAIR_BOOK_HIGHLIGHT   4
+#define PAIR_BOOK_DISABLED    5
+#define PAIR_BOOK_SECTION     6
+#define PAIR_SEARCH           7
+#define PAIR_SEARCH_HIGHLIGHT 8
 
 #define MAX_BOOK_TITLE_LEN    20
 #define NUMBER_OF_BOOKS       66
@@ -121,6 +124,27 @@ struct book all_books[NUMBER_OF_BOOKS] = {
 struct book books[NUMBER_OF_BOOKS];
 int books_len = 0;
 
+char *strlwr(char *input)
+{
+    char *str = strdup(input);
+    unsigned char *p = (unsigned char *) str;
+
+    while (*p) {
+        *p = tolower((unsigned char) *p);
+        p++;
+    }
+
+    return str;
+}
+
+int strpos(char *haystack, char *needle)
+{
+    char *p = strstr(haystack, needle);
+    if (p)
+        return p - haystack;
+    return -1;
+}
+
 void get_winsize()
 {
     struct winsize new_winsz;
@@ -184,6 +208,8 @@ static void init_colors()
     init_pair(PAIR_BOOK_DISABLED, COLOR_GREEN + 8, COLOR_BLACK);
     init_pair(PAIR_BOOK_SECTION, COLOR_WHITE + 8, 0);
     init_pair(PAIR_SEARCH, COLOR_RED + 8, COLOR_BLACK);
+    init_pair(PAIR_SEARCH_HIGHLIGHT, COLOR_GREEN + 8, COLOR_GREEN);
+
     clear();
 }
 
@@ -205,6 +231,14 @@ void draw_one_book(int y, int x, struct book book, int key)
     }
 
     write_here(y, x * BOOK_FORMAT_LEN, color_pair, s);
+
+    int pos = strpos(strlwr(s), strlwr(search));
+
+    char *highlighted = malloc(strlen(search) + 1);
+    highlighted[strlen(search)] = 0;
+    memcpy(highlighted, s + pos, strlen(search));
+
+    write_here(y, x * BOOK_FORMAT_LEN + pos, PAIR_SEARCH_HIGHLIGHT, highlighted);
 }
 
 void recalculate_height()
@@ -326,7 +360,8 @@ filter_books()
         sprintf((char *) &book_label, "%2d. %-15s", all_books[i].id,
                 all_books[i].title);
 
-        char *found = strstr((char *) &book_label, (char *) &search);
+        char *found = strstr(strlwr((char *) &book_label),
+                             strlwr((char *) &search));
         if (found != NULL) {
             books[books_len] = all_books[i];
             if (selected_id == books[books_len].id) {
