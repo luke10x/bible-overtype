@@ -118,6 +118,7 @@ struct book all_books[NUMBER_OF_BOOKS] = {
     {.id = 65,.title = "Jude" },
     {.id = 66,.title = "Revelation" }
 };
+
 struct book books[NUMBER_OF_BOOKS];
 int books_len = 0;
 
@@ -148,25 +149,27 @@ void write_here(const int row, const int col, int color_pair, char *str)
              0,
              0,
              vpadding,
-             padding,
-             winsz.ws_row - 1 - vpadding,
-             winsz.ws_col - padding);
+             padding, winsz.ws_row - 1 - vpadding, winsz.ws_col - padding);
     // prefresh(pad, 0,0,0,0, winsz.ws_row-1, pad_width);
 }
 
 
-void write_status(int color_pair, char *str)
+void displayStatusLine()
 {
+    bar = newpad(2, winsz.ws_col);
+
+    char *str = "Select: ";
+
     char tpl[10];
-    sprintf((char *)&tpl, "%%-%ds", winsz.ws_col - 0);
+    sprintf((char *) &tpl, "%%-%ds", winsz.ws_col - 0);
 
     char *bg = malloc(winsz.ws_col + 1);
     sprintf(bg, tpl, str);
 
     wmove(bar, 0, 0);
-    wattron(bar, COLOR_PAIR(color_pair));
+    wattron(bar, COLOR_PAIR(PAIR_STATUS));
     waddstr(bar, bg);
-    wattroff(bar, COLOR_PAIR(color_pair));
+    wattroff(bar, COLOR_PAIR(PAIR_STATUS));
 
     wmove(bar, 0, 8);
 
@@ -193,20 +196,11 @@ static void init_colors()
     clear();
 }
 
-void formatBottomLine()
+void draw_one_book(int y, int x, struct book book, int key)
 {
-    bar = newpad(2, winsz.ws_col);
-
-    char *s = malloc(winsz.ws_col - 2);
-
-    write_status(PAIR_STATUS, "Select: ");
-}
-
-
-void draw_one_book(int y, int x, struct book book, int key) {
     char s[BOOK_FORMAT_LEN];
-    
-    
+
+
     if (book.id == 0) {
         sprintf(s, "%-19s", book.title);
         write_here(y, x * BOOK_FORMAT_LEN, PAIR_BOOK_SECTION, s);
@@ -222,7 +216,8 @@ void draw_one_book(int y, int x, struct book book, int key) {
     write_here(y, x * BOOK_FORMAT_LEN, color_pair, s);
 }
 
-void recalculate_height() {
+void recalculate_height()
+{
     visible_columns = ((int) (winsz.ws_col / BOOK_FORMAT_LEN) - 1);
     if ((winsz.ws_col % BOOK_FORMAT_LEN) > 0) {
         visible_columns++;
@@ -236,13 +231,14 @@ void recalculate_height() {
         height = winsz.ws_row - 1;
     }
 
-    while (((int)(selected / height)) >= ((int)(delta + visible_columns))) {
+    while (((int) (selected / height)) >= ((int) (delta + visible_columns))) {
         delta++;
     }
-    while (((int)(selected / height)) < delta) {
+    while (((int) (selected / height)) < delta) {
         delta--;
     }
 }
+
 /**
  * In order to reach the the last books with less selector move
  * we try to have as many columns as the sreen allows.
@@ -262,14 +258,14 @@ void drawBooks()
     int visible_width = visible_columns * BOOK_FORMAT_LEN;
     padding = 0;
     if (winsz.ws_col > visible_width) {
-        padding = (int)((winsz.ws_col - visible_width) / 2);
+        padding = (int) ((winsz.ws_col - visible_width) / 2);
 
         if ((winsz.ws_col - pad_width) % 2) {
             padding++;
         }
     }
 
-    vpadding = (int)((winsz.ws_row - height) / 2);
+    vpadding = (int) ((winsz.ws_row - height) / 2);
 
     pad = newpad(winsz.ws_row - 1, winsz.ws_col);
     scrollok(pad, 1);
@@ -288,7 +284,7 @@ void drawBooks()
     }
 
     char s[100];
-    sprintf((char *)&s, "vc %d ; ;", visible_columns);
+    sprintf((char *) &s, "vc %d ; ;", visible_columns);
     write_here(4, 2, PAIR_STATUS, s);
 
     ///////////////////////////////
@@ -298,37 +294,40 @@ void drawBooks()
     // write_here(2, 2, PAIR_STATUS, s);
 }
 
-void fast_draw_books() {
+void fast_draw_books()
+{
     int y = selected % height;
-    int x = (int)(selected / height) - delta;
+    int x = (int) (selected / height) - delta;
     draw_one_book(y, x, books[selected], selected);
 
     y = old_selected % height;
-    x = (int)(old_selected / height) - delta;
+    x = (int) (old_selected / height) - delta;
     draw_one_book(y, x, books[old_selected], old_selected);
 }
 
 void redraw()
 {
     drawBooks();
-    formatBottomLine();
+    displayStatusLine();
 }
 
 
 void fast_redraw()
 {
     fast_draw_books();
-    formatBottomLine();
+    displayStatusLine();
 }
 
-filter_books() {
+filter_books()
+{
     books_len = 0;
     for (int i = 0; i < NUMBER_OF_BOOKS; i++) {
         char book_label[20];
 
-        sprintf((char *)&book_label, "%2d. %-15s", all_books[i].id, all_books[i].title);
+        sprintf((char *) &book_label, "%2d. %-15s", all_books[i].id,
+                all_books[i].title);
 
-        char * found = strstr((char *)&book_label, (char *)&search);
+        char *found = strstr((char *) &book_label, (char *) &search);
         if (found != NULL) {
             books[books_len] = all_books[i];
             books_len++;
@@ -346,7 +345,7 @@ int main(void)
     cbreak();
     noecho();
     init_colors();
-    
+
     get_winsize();
 
     filter_books();
@@ -359,46 +358,44 @@ int main(void)
         if (ch == 154) {
             resized = 1;
         }
-        if ((ch == 255) && !resized)
+        if ((ch == 255 || ch == -1) && !resized) {
             continue;
-            
+        }
+
         old_selected = selected;
         int old_delta = delta;
 
         if (ch == 2) {
-            if ((selected % height) < height - 1 && (selected + 1) < NUMBER_OF_BOOKS) {
+            if ((selected % height) < height - 1
+                && (selected + 1) < NUMBER_OF_BOOKS) {
                 selected++;
             }
-        }
-        
-        if (ch == 3) {
+        } else if (ch == 3) {
             if ((selected % height) > 0) {
                 selected--;
             }
-        }
-
-        if (ch == 4) {
+        } else if (ch == 4) {
             if ((selected - height) >= 0) {
                 selected -= height;
             }
-        }
-        if (ch == 5) {
+        } else if (ch == 5) {
             if ((selected + height) < NUMBER_OF_BOOKS) {
                 selected += height;
-            } else if ((NUMBER_OF_BOOKS - (NUMBER_OF_BOOKS % height) > selected)) {
+            } else
+                if ((NUMBER_OF_BOOKS - (NUMBER_OF_BOOKS % height) > selected)) {
                 selected = NUMBER_OF_BOOKS - 1;
             }
-        }
-
-        if (ch > '0' && ch < 'z' && (strlen(search) < 20)) {
+        } else if (ch > '0' && ch < 'z' && (search_len < 20)) {
             search[search_len] = ch;
             search_len++;
             filter_books();
-        }
-        if ((ch == 7 || ch == 8) && (strlen(search) > 0)) {
-            search[search_len] = 0;
+        } else if ((ch == 7 || ch == 8) && (search_len > 0)) {
+            // printf("pressed back;\r\n");
             search_len--;
+            search[search_len] = 0;
             filter_books();
+        } else {
+            // printf("uncecogniced ch %d, searchle = %d\r\n", ch, search_len);
         }
 
         recalculate_height();
@@ -407,9 +404,9 @@ int main(void)
             resized = 0;
             clear();
             redraw();
-        } else  {
+        } else {
             fast_redraw();
-        } 
+        }
     }
 
     nocbreak();
