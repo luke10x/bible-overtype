@@ -223,8 +223,8 @@ void recalculate_height()
         visible_columns++;
     }
 
-    height = (int) (NUMBER_OF_BOOKS / visible_columns);
-    if ((NUMBER_OF_BOOKS % visible_columns) > 0) {
+    height = (int) (books_len / visible_columns);
+    if ((books_len % visible_columns) > 0) {
         height++;
     }
     if (height > winsz.ws_row - 1) {
@@ -251,7 +251,7 @@ void recalculate_height()
  */
 void drawBooks()
 {
-    int columns = (int) (NUMBER_OF_BOOKS / height) + 1;
+    int columns = (int) (books_len / height) + 1;
 
     delwin(pad);
     pad_width = columns * BOOK_FORMAT_LEN + 0;
@@ -275,7 +275,7 @@ void drawBooks()
     int i = delta * height;
     for (int x = 0; x < visible_columns; x++) {
         for (int y = 0; y < height; y++) {
-            if (i >= NUMBER_OF_BOOKS)
+            if (i >= books_len)
                 break;
             draw_one_book(y, x, books[i], i);
 
@@ -320,6 +320,8 @@ void fast_redraw()
 
 filter_books()
 {
+    int selected_id = books[selected].id;
+    int selected_is_in_new_set = 0;
     books_len = 0;
     for (int i = 0; i < NUMBER_OF_BOOKS; i++) {
         char book_label[20];
@@ -330,9 +332,18 @@ filter_books()
         char *found = strstr((char *) &book_label, (char *) &search);
         if (found != NULL) {
             books[books_len] = all_books[i];
+            if (selected_id == books[books_len].id) {
+                selected = books_len;
+                selected_is_in_new_set = 1;
+            }
             books_len++;
         }
     }
+    if (!selected_is_in_new_set) {
+        selected = 0;
+    }
+
+    printf("viso found %d books\r\n", books_len);
 }
 
 int main(void)
@@ -367,7 +378,7 @@ int main(void)
 
         if (ch == 2) {
             if ((selected % height) < height - 1
-                && (selected + 1) < NUMBER_OF_BOOKS) {
+                && (selected + 1) < books_len) {
                 selected++;
             }
         } else if (ch == 3) {
@@ -379,21 +390,29 @@ int main(void)
                 selected -= height;
             }
         } else if (ch == 5) {
-            if ((selected + height) < NUMBER_OF_BOOKS) {
+            if ((selected + height) < books_len) {
                 selected += height;
             } else
-                if ((NUMBER_OF_BOOKS - (NUMBER_OF_BOOKS % height) > selected)) {
-                selected = NUMBER_OF_BOOKS - 1;
+                if ((books_len - (books_len % height) > selected)) {
+                selected = books_len - 1;
             }
         } else if (ch > '0' && ch < 'z' && (search_len < 20)) {
             search[search_len] = ch;
             search_len++;
             filter_books();
+            if (books_len == 0) {
+                search_len--;
+                search[search_len] = 0;
+            } else {
+                resized = 1;
+
+            }
         } else if ((ch == 7 || ch == 8) && (search_len > 0)) {
             // printf("pressed back;\r\n");
             search_len--;
             search[search_len] = 0;
             filter_books();
+            resized = 1;
         } else {
             // printf("uncecogniced ch %d, searchle = %d\r\n", ch, search_len);
         }
