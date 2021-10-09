@@ -59,8 +59,8 @@ struct book all_books[NUMBER_OF_BOOKS] = {
     {.id = 10,.title = "2 Samuel" },
     {.id = 11,.title = "1 Kings" },
     {.id = 12,.title = "2 Kings" },
-    {.id = 13,.title = "Chronicles" },
-    {.id = 14,.title = "Chronicles" },
+    {.id = 13,.title = "1 Chronicles" },
+    {.id = 14,.title = "2 Chronicles" },
     {.id = 15,.title = "Ezra" },
     {.id = 16,.title = "Nehemiah" },
     {.id = 17,.title = "Esther" },
@@ -174,7 +174,16 @@ void displayStatusLine()
 {
     bar = newpad(2, winsz.ws_col);
 
-    char *str = "Select: ";
+    if (search_len == 0) {
+        wmove(bar, 0, 0);
+        wattron(bar, COLOR_PAIR(PAIR_STATUS));
+        waddstr(bar, "Select a book using cursor keys or search by name.");
+        wattroff(bar, COLOR_PAIR(PAIR_STATUS));
+        curs_set(0);
+        goto refresh;
+    }
+    curs_set(1);
+    char *str = "Filtered by: ";
 
     char tpl[10];
     sprintf((char *) &tpl, "%%-%ds", winsz.ws_col - 0);
@@ -187,12 +196,13 @@ void displayStatusLine()
     waddstr(bar, bg);
     wattroff(bar, COLOR_PAIR(PAIR_STATUS));
 
-    wmove(bar, 0, 8);
+    wmove(bar, 0, 13);
 
     wattron(bar, COLOR_PAIR(PAIR_SEARCH));
     waddstr(bar, search);
     wattroff(bar, COLOR_PAIR(PAIR_SEARCH));
 
+refresh:
     refresh();
     wrefresh(pad);
     prefresh(bar, 0, 0, winsz.ws_row - 1, 0, winsz.ws_row - 1, winsz.ws_col);
@@ -201,13 +211,13 @@ void displayStatusLine()
 static void init_colors()
 {
     start_color();
-    init_pair(PAIR_STATUS, COLOR_RED, 0);
+    init_pair(PAIR_STATUS, COLOR_WHITE, 0);
     init_pair(PAIR_BOOK, COLOR_GREEN + 8, COLOR_BLACK);
     init_pair(PAIR_BOOK_SELECTED, COLOR_BLACK, COLOR_GREEN);
     init_pair(PAIR_BOOK_HIGHLIGHT, COLOR_GREEN + 8, COLOR_BLACK);
     init_pair(PAIR_BOOK_DISABLED, COLOR_GREEN + 8, COLOR_BLACK);
     init_pair(PAIR_BOOK_SECTION, COLOR_WHITE + 8, 0);
-    init_pair(PAIR_SEARCH, COLOR_RED + 8, COLOR_BLACK);
+    init_pair(PAIR_SEARCH, COLOR_GREEN + 8, COLOR_BLACK);
     init_pair(PAIR_SEARCH_HIGHLIGHT, COLOR_GREEN + 8, COLOR_GREEN);
 
     clear();
@@ -263,7 +273,6 @@ void recalculate_height()
         delta--;
     }
 
-
     int visible_width = visible_columns * BOOK_FORMAT_LEN;
     if (books_len < visible_columns) {
         visible_width = books_len * BOOK_FORMAT_LEN;
@@ -315,11 +324,10 @@ void drawBooks()
         }
     }
 
-    char s[100];
-    sprintf((char *) &s, "vc %d ; ;", visible_columns);
-    write_here(4, 2, PAIR_STATUS, s);
-
     ///////////////////////////////
+    // char s[100];
+    // sprintf((char *) &s, "vc %d ; ;", visible_columns);
+    // write_here(4, 2, PAIR_STATUS, s);
     // char s[100];
     // sprintf((char *)&s, "vc = %d; height = %d, columns = %d; wsrow=%d;",
     //         visible_columns, height, columns, winsz.ws_row);
@@ -394,7 +402,7 @@ int main(void)
 
     halfdelay(5);
 
-    while ((ch = getch()) != ' ') {
+    while ((ch = getch()) != 27) {
         get_winsize();
 
         if (ch == 154) {
@@ -425,7 +433,7 @@ int main(void)
             } else if ((books_len - (books_len % height) > selected)) {
                 selected = books_len - 1;
             }
-        } else if (ch > '0' && ch < 'z' && (search_len < 20)) {
+        } else if (((ch > '0' && ch < 'z') || ch == ' ' || ch == '.') && (search_len < 20)) {
             search[search_len] = ch;
             search_len++;
             filter_books();
