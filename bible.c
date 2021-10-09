@@ -139,18 +139,12 @@ void write_here(const int row, const int col, int color_pair, char *str)
     wattron(pad, COLOR_PAIR(color_pair));
     waddstr(pad, str);
     wattroff(pad, COLOR_PAIR(color_pair));
-    // wmove(pad, 0, 0);
-
 
     refresh();
 
     wrefresh(pad);
-    prefresh(pad,
-             0,
-             0,
-             vpadding,
-             padding, winsz.ws_row - 1 - vpadding, winsz.ws_col - padding);
-    // prefresh(pad, 0,0,0,0, winsz.ws_row-1, pad_width);
+    prefresh(pad, 0, 0, vpadding, padding,
+             winsz.ws_row - 1 - vpadding, winsz.ws_col - padding);
 }
 
 
@@ -181,7 +175,6 @@ void displayStatusLine()
     wrefresh(pad);
     prefresh(bar, 0, 0, winsz.ws_row - 1, 0, winsz.ws_row - 1, winsz.ws_col);
 }
-
 
 static void init_colors()
 {
@@ -311,7 +304,6 @@ void redraw()
     displayStatusLine();
 }
 
-
 void fast_redraw()
 {
     fast_draw_books();
@@ -377,8 +369,7 @@ int main(void)
         int old_delta = delta;
 
         if (ch == 2) {
-            if ((selected % height) < height - 1
-                && (selected + 1) < books_len) {
+            if ((selected % height) < height - 1 && (selected + 1) < books_len) {
                 selected++;
             }
         } else if (ch == 3) {
@@ -392,8 +383,7 @@ int main(void)
         } else if (ch == 5) {
             if ((selected + height) < books_len) {
                 selected += height;
-            } else
-                if ((books_len - (books_len % height) > selected)) {
+            } else if ((books_len - (books_len % height) > selected)) {
                 selected = books_len - 1;
             }
         } else if (ch > '0' && ch < 'z' && (search_len < 20)) {
@@ -405,10 +395,8 @@ int main(void)
                 search[search_len] = 0;
             } else {
                 resized = 1;
-
             }
         } else if ((ch == 7 || ch == 8) && (search_len > 0)) {
-            // printf("pressed back;\r\n");
             search_len--;
             search[search_len] = 0;
             filter_books();
