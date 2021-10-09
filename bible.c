@@ -40,7 +40,6 @@ int visible_columns;
 char search[20];
 int search_len = 0;
 
-
 struct book all_books[NUMBER_OF_BOOKS] = {
     // {.id = 0,.title = "The Law" },
     {.id = 1,.title = "Genesis" },
@@ -147,7 +146,6 @@ void write_here(const int row, const int col, int color_pair, char *str)
              winsz.ws_row - 1 - vpadding, winsz.ws_col - padding);
 }
 
-
 void displayStatusLine()
 {
     bar = newpad(2, winsz.ws_col);
@@ -230,6 +228,24 @@ void recalculate_height()
     while (((int) (selected / height)) < delta) {
         delta--;
     }
+
+
+    int visible_width = visible_columns * BOOK_FORMAT_LEN;
+    if (books_len < visible_columns) {
+        visible_width = books_len * BOOK_FORMAT_LEN;
+    }
+
+    padding = 0;
+    vpadding = 0;
+    if (winsz.ws_col > visible_width) {
+        padding = (int) ((winsz.ws_col - visible_width) / 2);
+
+        if ((winsz.ws_col - pad_width) % 2) {
+            padding++;
+        }
+    }
+
+    vpadding = (int) ((winsz.ws_row - height) / 2);
 }
 
 /**
@@ -248,17 +264,6 @@ void drawBooks()
 
     delwin(pad);
     pad_width = columns * BOOK_FORMAT_LEN + 0;
-    int visible_width = visible_columns * BOOK_FORMAT_LEN;
-    padding = 0;
-    if (winsz.ws_col > visible_width) {
-        padding = (int) ((winsz.ws_col - visible_width) / 2);
-
-        if ((winsz.ws_col - pad_width) % 2) {
-            padding++;
-        }
-    }
-
-    vpadding = (int) ((winsz.ws_row - height) / 2);
 
     pad = newpad(winsz.ws_row - 1, winsz.ws_col);
     scrollok(pad, 1);
@@ -331,11 +336,10 @@ filter_books()
             books_len++;
         }
     }
-    if (!selected_is_in_new_set) {
+    if (!selected_is_in_new_set && books_len > 0) {
         selected = 0;
     }
-
-    printf("viso found %d books\r\n", books_len);
+    // printf("viso found %d books\r\n", books_len);
 }
 
 int main(void)
@@ -393,6 +397,7 @@ int main(void)
             if (books_len == 0) {
                 search_len--;
                 search[search_len] = 0;
+                filter_books();
             } else {
                 resized = 1;
             }
