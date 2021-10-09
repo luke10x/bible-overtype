@@ -363,6 +363,8 @@ int main(void)
         if (ch == 5) {
             if ((selected + height) < NUMBER_OF_BOOKS) {
                 selected += height;
+            } else if ((NUMBER_OF_BOOKS - (NUMBER_OF_BOOKS % height) > selected)) {
+                selected = NUMBER_OF_BOOKS - 1;
             }
         }
 
