@@ -11,6 +11,7 @@
 #define PAIR_BOOK_HIGHLIGHT 4
 #define PAIR_BOOK_DISABLED  5
 #define PAIR_BOOK_SECTION   6
+#define PAIR_SEARCH         7
 
 #define MAX_BOOK_TITLE_LEN    20
 #define NUMBER_OF_BOOKS       66
@@ -36,6 +37,8 @@ char message[100];
 int delta = 0;
 int pad_width;
 int visible_columns;
+char search[20];
+int search_len = 0;
 
 
 struct book books[NUMBER_OF_BOOKS] = {
@@ -153,7 +156,7 @@ void write_here(const int row, const int col, int color_pair, char *str)
 void write_status(int color_pair, char *str)
 {
     char tpl[10];
-    sprintf((char *)&tpl, "|%%-%ds|", winsz.ws_col - 2);
+    sprintf((char *)&tpl, "%%-%ds", winsz.ws_col - 0);
 
     char *bg = malloc(winsz.ws_col + 1);
     sprintf(bg, tpl, str);
@@ -161,11 +164,13 @@ void write_status(int color_pair, char *str)
     wmove(bar, 0, 0);
     wattron(bar, COLOR_PAIR(color_pair));
     waddstr(bar, bg);
-
     wattroff(bar, COLOR_PAIR(color_pair));
-    // move(winsz.ws_row - 1, 0);
-    wmove(bar, 0, 5);
-    waddstr(bar, "tttt");
+
+    wmove(bar, 0, 8);
+
+    wattron(bar, COLOR_PAIR(PAIR_SEARCH));
+    waddstr(bar, search);
+    wattroff(bar, COLOR_PAIR(PAIR_SEARCH));
 
     refresh();
     wrefresh(pad);
@@ -182,6 +187,7 @@ static void init_colors()
     init_pair(PAIR_BOOK_HIGHLIGHT, COLOR_GREEN + 8, COLOR_BLACK);
     init_pair(PAIR_BOOK_DISABLED, COLOR_GREEN + 8, COLOR_BLACK);
     init_pair(PAIR_BOOK_SECTION, COLOR_WHITE + 8, 0);
+    init_pair(PAIR_SEARCH, COLOR_RED + 8, COLOR_BLACK);
     clear();
 }
 
@@ -190,11 +196,8 @@ void formatBottomLine()
     bar = newpad(2, winsz.ws_col);
 
     char *s = malloc(winsz.ws_col - 2);
-    int number_of_pillars = (int) (winsz.ws_col / BOOK_FORMAT_LEN);
 
-    sprintf(s, "Select book: %s;", message);
-
-    write_status(PAIR_STATUS, s);
+    write_status(PAIR_STATUS, "Select: ");
 }
 
 
@@ -368,16 +371,24 @@ int main(void)
             }
         }
 
+        if (ch > '0' && ch < 'z' && (strlen(search) < 20)) {
+            search[search_len] = ch;
+            search_len++;
+        }
+        if ((ch == 7 || ch == 8) && (strlen(search) > 0)) {
+            search[search_len] = 0;
+            search_len--;
+        }
+
         recalculate_height();
+
         if (resized || (old_delta != delta)) {
             resized = 0;
             clear();
             redraw();
-            // old_selected = selected;
         } else  {
             fast_redraw();
         } 
-
     }
 
     nocbreak();
