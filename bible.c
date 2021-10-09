@@ -201,7 +201,7 @@ void formatBottomLine()
 }
 
 
-void draw_one_book(int y, int x, struct book book) {
+void draw_one_book(int y, int x, struct book book, int key) {
     char s[BOOK_FORMAT_LEN];
     
     
@@ -213,7 +213,7 @@ void draw_one_book(int y, int x, struct book book) {
     sprintf(s, "%2d. %-15s", book.id, book.title);
 
     int color_pair = PAIR_BOOK;
-    if (book.id - 1 == selected) {
+    if (key == selected) {
         color_pair = PAIR_BOOK_SELECTED;
     }
 
@@ -279,7 +279,7 @@ void drawBooks()
         for (int y = 0; y < height; y++) {
             if (i >= NUMBER_OF_BOOKS)
                 break;
-            draw_one_book(y, x, books[i]);
+            draw_one_book(y, x, books[i], i);
 
             i++;
         }
@@ -299,11 +299,11 @@ void drawBooks()
 void fast_draw_books() {
     int y = selected % height;
     int x = (int)(selected / height) - delta;
-    draw_one_book(y, x, books[selected]);
+    draw_one_book(y, x, books[selected], selected);
 
     y = old_selected % height;
     x = (int)(old_selected / height) - delta;
-    draw_one_book(y, x, books[old_selected]);
+    draw_one_book(y, x, books[old_selected], old_selected);
 }
 
 void redraw()
