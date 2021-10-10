@@ -21,7 +21,8 @@
 #define NUMBER_OF_BOOKS       66
 #define LAST_HEBREW_SCRIPTURE 39
 #define BOOK_FORMAT_LEN       20
-
+#define MAX_CHAPTER          150
+#define CHAPTER_FORMAT_LEN     5
 struct book {
     unsigned short int id;
     unsigned short int chapters;
@@ -117,6 +118,28 @@ struct book all_books[NUMBER_OF_BOOKS] = {
 struct book books[NUMBER_OF_BOOKS];
 int books_len = 0;
 
+int all_chapters[MAX_CHAPTER] = {
+     1,   2,   3,   4,   5,   6,   7,   8,   9,   10,
+     11,  12,  13,  14,  15,  16,  17,  18,  19,  20,
+     21,  22,  23,  24,  25,  26,  27,  28,  29,  30,
+     31,  32,  33,  34,  35,  36,  37,  38,  39,  40,
+     41,  42,  43,  44,  45,  46,  47,  48,  49,  50,
+     51,  52,  53,  54,  55,  56,  57,  58,  59,  60,
+     61,  62,  63,  64,  65,  66,  67,  68,  69,  70,
+     71,  72,  73,  74,  75,  76,  77,  78,  79,  80,
+     81,  82,  83,  84,  85,  86,  87,  88,  89,  90,
+     91,  92,  93,  94,  95,  96,  97,  98,  99, 100,
+    101, 102, 103, 104, 105, 106, 107, 108, 109, 110,
+    111, 112, 113, 114, 115, 116, 117, 118, 119, 120,
+    121, 122, 123, 124, 125, 126, 127, 128, 129, 130,
+    131, 132, 133, 134, 135, 136, 137, 138, 139, 140,
+    141, 142, 143, 144, 145, 146, 147, 148, 149, 150
+};
+int chapters[MAX_CHAPTER];
+int chapters_len = 0;
+
+struct book *selected_book;
+
 char *strlwr(char *input)
 {
     char *str = strdup(input);
@@ -170,7 +193,13 @@ void displayStatusLine()
     if (search_len == 0) {
         wmove(bar, 0, 0);
         wattron(bar, COLOR_PAIR(PAIR_STATUS));
-        waddstr(bar, "Select a book using cursor keys or search by name.");
+        if (selected_book == NULL) {
+           waddstr(bar, "Select a book using cursor keys or search by name.");
+        } else {
+            char * s = malloc(200);
+            sprintf(s, "%s selected. Now select a chapter.", selected_book->title);
+           waddstr(bar, s);
+        }
         wattroff(bar, COLOR_PAIR(PAIR_STATUS));
         curs_set(0);
         goto refresh;
@@ -217,10 +246,35 @@ static void init_colors()
     clear();
 }
 
+void draw_one_chapter(int y, int x, int chapter, int key) {
+    char s[BOOK_FORMAT_LEN];
+
+    sprintf(s, "%3d", chapter);
+
+    int color_pair = PAIR_BOOK;
+    if (key == selected) {
+        color_pair = PAIR_BOOK_SELECTED;
+    }
+
+    write_here(y, x * CHAPTER_FORMAT_LEN, color_pair, s);
+
+    int pos = strpos(strlwr(s), strlwr(search));
+
+    char *highlighted = malloc(strlen(search) + 1);
+    highlighted[strlen(search)] = 0;
+    memcpy(highlighted, s + pos, strlen(search));
+
+    int color_pair_search = PAIR_SEARCH_HIGHLIGHT;
+    if (key == selected) {
+        color_pair_search = PAIR_SEARCH_SELECTED;
+    }
+    write_here(y, x * CHAPTER_FORMAT_LEN + pos, color_pair_search,
+               highlighted);
+}
+
 void draw_one_book(int y, int x, struct book book, int key)
 {
     char s[BOOK_FORMAT_LEN];
-
 
     if (book.id == 0) {
         sprintf(s, "%-19s", book.title);
@@ -356,7 +410,7 @@ void fast_redraw()
     displayStatusLine();
 }
 
-filter_books()
+void filter_books()
 {
     int selected_id = books[selected].id;
     int selected_is_in_new_set = 0;
@@ -384,6 +438,100 @@ filter_books()
     // printf("viso found %d books\r\n", books_len);
 }
 
+
+void filter_chapters()
+{
+    int selected_id = chapters[selected];
+    int selected_is_in_new_set = 0;
+    chapters_len = 0;
+    for (int i = 0; i < selected_book->chapters; i++) {
+        char chapter_label[20];
+
+        sprintf((char *) &chapter_label, "%3d", all_chapters[i]);
+
+        char *found = strstr(strlwr((char *) &chapter_label),
+                             strlwr((char *) &search));
+        if (found != NULL) {
+            chapters[chapters_len] = all_chapters[i];
+            if (selected_id == chapters[chapters_len]) {
+                selected = chapters_len;
+                selected_is_in_new_set = 1;
+            }
+            chapters_len++;
+        }
+    }
+    if (!selected_is_in_new_set && chapters_len > 0) {
+        selected = 0;
+    }
+}
+
+void recalculate_chapters() {
+    visible_columns = ((int) (winsz.ws_col / CHAPTER_FORMAT_LEN));
+
+    height = (int) (chapters_len / visible_columns) + 1;
+    if ((chapters_len % visible_columns) == 0) {
+        height--;
+    }
+
+    int visible_width = visible_columns * CHAPTER_FORMAT_LEN;
+    if (chapters_len < visible_columns) {
+        visible_width = chapters_len * CHAPTER_FORMAT_LEN;
+    }
+
+    padding = 0;
+    vpadding = 0;
+    if (winsz.ws_col > visible_width) {
+        padding = (int) ((winsz.ws_col - visible_width) / 2);
+
+        if ((winsz.ws_col - pad_width) % 2) {
+            padding++;
+        }
+    }
+
+    vpadding = (int) ((winsz.ws_row - height) / 2); 
+}
+
+
+
+void redraw_chapters() {
+    int columns = 10 ;
+    
+    //(int) (chapters_len / height) + 1;
+
+    delwin(pad);
+    pad_width = columns * CHAPTER_FORMAT_LEN + 0;
+
+    pad = newpad(winsz.ws_row - 1, winsz.ws_col);
+    scrollok(pad, 1);
+    wclear(pad);
+
+    int i = 0;
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < visible_columns; x++) {
+            if (i >= chapters_len)
+                break;
+            draw_one_chapter(y, x, chapters[i], i);
+
+            i++;
+        }
+    }
+    
+    displayStatusLine();
+}
+
+void fast_redraw_chapters()
+{
+    int x = selected % visible_columns;
+    int y = (int) (selected / visible_columns);
+    draw_one_chapter(y, x, chapters[selected], selected);
+
+    x = old_selected % visible_columns;
+    y = (int) (old_selected / visible_columns);
+    draw_one_chapter(y, x, chapters[old_selected], old_selected);
+
+    displayStatusLine();
+}
+
 int main(void)
 {
     // Locale has to be set before the call to iniscr()
@@ -401,9 +549,12 @@ int main(void)
 
     halfdelay(5);
 
-    while ((ch = getch()) != 27) {
+    while ((ch = getch()) != 10) {
         get_winsize();
-
+        if (ch == 27) {
+            endwin();
+            exit(0);
+        }
         if (ch == 154) {
             resized = 1;
         }
@@ -464,7 +615,82 @@ int main(void)
         }
     }
 
+    selected_book = &books[selected];
+    chapters_len = selected_book->chapters;
+
+    while (search_len > 0) {
+        search_len--;
+        search[search_len] = 0;
+    }
+
+    filter_chapters();
+    
+    resized = 1;
+    while ((ch = getch()) != 10) {
+        get_winsize();
+        if (ch == 27) {
+            endwin();
+            exit(0);
+        }
+        if (ch == 154) {
+            resized = 1;
+        }
+        if ((ch == 255 || ch == -1) && !resized) {
+            continue;
+        }
+
+        old_selected = selected;
+        if (ch == 2) {
+            if ((selected + visible_columns) < chapters_len) {
+                selected += visible_columns;
+            }
+        } else if (ch == 3) {
+            if ((selected - visible_columns) >= 0) {
+                selected -= visible_columns;
+            }
+        } else if (ch == 4) {
+    
+            if ((selected) % visible_columns > 0) {
+                selected--;
+            }
+        } else if (ch == 5) {
+            if (((selected +1) % visible_columns > 0) && (selected+ 1) < chapters_len) {
+                selected++;
+            }
+        } else if (ch > '0' && ch < '9' && (search_len < 20)) {
+            search[search_len] = ch;
+            search_len++;
+            filter_chapters();
+            if (books_len == 0) {
+                search_len--;
+                search[search_len] = 0;
+                filter_chapters();
+            } else {
+                resized = 1;
+            }
+        } else if ((ch == 7 || ch == 8) && (search_len > 0)) {
+            search_len--;
+            search[search_len] = 0;
+            filter_chapters();
+            resized = 1;
+        }
+
+        recalculate_chapters();
+
+        if (resized) {
+            resized = 0;
+            clear();
+            redraw_chapters();
+        } else {
+            fast_redraw_chapters();
+        }
+    }
+
+
     nocbreak();
     endwin();
+
+    printf("Selected: %s %d\r\n", selected_book->title, chapters[selected]);
+
     exit(0);
 }
