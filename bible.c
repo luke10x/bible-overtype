@@ -15,6 +15,7 @@
 #define PAIR_BOOK_SECTION     6
 #define PAIR_SEARCH           7
 #define PAIR_SEARCH_HIGHLIGHT 8
+#define PAIR_SEARCH_SELECTED  9
 
 #define MAX_BOOK_TITLE_LEN    20
 #define NUMBER_OF_BOOKS       66
@@ -210,7 +211,8 @@ static void init_colors()
     init_pair(PAIR_BOOK_DISABLED, COLOR_GREEN + 8, COLOR_BLACK);
     init_pair(PAIR_BOOK_SECTION, COLOR_WHITE + 8, 0);
     init_pair(PAIR_SEARCH, COLOR_GREEN + 8, COLOR_BLACK);
-    init_pair(PAIR_SEARCH_HIGHLIGHT, COLOR_GREEN + 8, COLOR_GREEN);
+    init_pair(PAIR_SEARCH_HIGHLIGHT, COLOR_WHITE + 8, COLOR_BLACK);
+    init_pair(PAIR_SEARCH_SELECTED, COLOR_WHITE + 8, COLOR_GREEN);
 
     clear();
 }
@@ -240,7 +242,11 @@ void draw_one_book(int y, int x, struct book book, int key)
     highlighted[strlen(search)] = 0;
     memcpy(highlighted, s + pos, strlen(search));
 
-    write_here(y, x * BOOK_FORMAT_LEN + pos, PAIR_SEARCH_HIGHLIGHT,
+    int color_pair_search = PAIR_SEARCH_HIGHLIGHT;
+    if (key == selected) {
+        color_pair_search = PAIR_SEARCH_SELECTED;
+    }
+    write_here(y, x * BOOK_FORMAT_LEN + pos, color_pair_search,
                highlighted);
 }
 
