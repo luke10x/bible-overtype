@@ -37,7 +37,7 @@
 #define XCH_KEY_BACKSPACE 3
 #define XCH_KEY_RESIZE    4
 
-#define MAX_LEN 81
+#define MAX_LEN 101
 #define MAX_LINES 99999
 
 struct xchar {
@@ -614,7 +614,7 @@ void overtype_current_line()
     do {
         uint32_t expected_ch;
         size_t len;
-        char str[80];
+        char str[MAX_LEN];
 
         expected_ch = simplify(broken_lines[line], column);
         sprintf(str, "%lc", expected_ch);
@@ -688,7 +688,7 @@ void overtype_current_line()
                 if (correct_ch == 0) {
                     correct_ch = 32;
                 }
-                char str[80] = { 0, 0, 0, 0, 0 };
+                char str[MAX_LEN] = { 0, 0, 0, 0, 0 };
                 sprintf(str, "%lc", correct_ch);
 
                 print_grey(line, last_char_pos, str);
