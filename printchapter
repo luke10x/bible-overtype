@@ -1,0 +1,31 @@
+#!/usr/bin/env python3
+# https://en.wikipedia.org/wiki/Chapters_and_verses_of_the_Bible#Chapters
+
+from simple_term_menu import TerminalMenu
+import subprocess
+import os
+import sys
+
+def transform_chapters(chapters_as_dict):
+    lst = []
+    for ch_index in chapters_as_dict:
+        ch = chapters_as_dict[ch_index]
+        lst.append((ch_index, ch["start"], ch["end"]))
+    return lst
+
+import json
+data = json.load(open('./bible-kjv.json', 'r'))
+# books = list(map(lambda b: { 'title': b, 'chapters': transform_chapters(data[b]["chapters"]) }, data) )
+books = data
+
+book = sys.argv[1]
+chapter = sys.argv[2]
+
+chapters = books[book]["chapters"]
+limits = chapters.get(chapter)
+
+fo = open("resources/the-king-james-bible.txt", "r")
+fo.seek(limits['start'])
+content = fo.read(limits['end'] - limits['start'] + 1)
+fo.close()
+subprocess.run(["./overtype"], text=True, input=content)

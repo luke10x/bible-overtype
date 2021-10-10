@@ -6,6 +6,7 @@
 #include <fcntl.h>
 #include <string.h>
 #include<ctype.h>
+#include <unistd.h>
 
 #define PAIR_STATUS           1
 #define PAIR_BOOK             2
@@ -376,15 +377,6 @@ void drawBooks()
             i++;
         }
     }
-
-    ///////////////////////////////
-    // char s[100];
-    // sprintf((char *) &s, "vc %d ; ;", visible_columns);
-    // write_here(4, 2, PAIR_STATUS, s);
-    // char s[100];
-    // sprintf((char *)&s, "vc = %d; height = %d, columns = %d; wsrow=%d;",
-    //         visible_columns, height, columns, winsz.ws_row);
-    // write_here(2, 2, PAIR_STATUS, s);
 }
 
 void fast_draw_books()
@@ -435,7 +427,6 @@ void filter_books()
     if (!selected_is_in_new_set && books_len > 0) {
         selected = 0;
     }
-    // printf("viso found %d books\r\n", books_len);
 }
 
 
@@ -496,8 +487,6 @@ void recalculate_chapters() {
 void redraw_chapters() {
     int columns = 10 ;
     
-    //(int) (chapters_len / height) + 1;
-
     delwin(pad);
     pad_width = columns * CHAPTER_FORMAT_LEN + 0;
 
@@ -600,8 +589,6 @@ int main(void)
             search[search_len] = 0;
             filter_books();
             resized = 1;
-        } else {
-            // printf("uncecogniced ch %d, searchle = %d\r\n", ch, search_len);
         }
 
         recalculate_height();
@@ -686,11 +673,17 @@ int main(void)
         }
     }
 
-
     nocbreak();
     endwin();
 
-    printf("Selected: %s %d\r\n", selected_book->title, chapters[selected]);
+    char s[4];
+    sprintf((char *) &s, "%d", chapters[selected]);
+    char* args[] = { "python3", "printchapter", selected_book->title, s, NULL };
+    if(execvp("python3", args) == -1) {
+        printf("\nfailed connection\n");
+    }
+
+    printf("Selected: %s %s\r\n", selected_book->title, s);
 
     exit(0);
 }
