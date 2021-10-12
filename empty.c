@@ -67,6 +67,7 @@ static void one_iter()
 
     char ch = getch();
     if (ch == -1) return;
+    if (ch == 255) return; // For my Little Endiam machine mainly
     if (ch == 27)
     {
             curs_set(1);
