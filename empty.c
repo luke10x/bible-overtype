@@ -7,20 +7,11 @@
 
 #include "./src/menu.h"
 #include "./src/status.h"
+#include "./src/common.h"
 
 #ifdef EMSCRIPTEN
 #include <emscripten.h>
 #endif
-
-#define PAIR_STATUS           1
-#define PAIR_BOOK             2
-#define PAIR_BOOK_SELECTED    3
-#define PAIR_BOOK_HIGHLIGHT   4
-#define PAIR_BOOK_DISABLED    5
-#define PAIR_BOOK_SECTION     6
-#define PAIR_SEARCH           7
-#define PAIR_SEARCH_HIGHLIGHT 8
-#define PAIR_SEARCH_SELECTED  9
 
 #define NUMBER_OF_BOOKS       66
 
@@ -149,7 +140,7 @@ void get_winsize()
 #endif
 }
 
-static void one_iter()
+static void loop_to_select_book()
 {
     char ch = getch();
     if (ch == -1 && !resized)
@@ -171,7 +162,9 @@ static void one_iter()
     int old_delta = menu_get_delta(book_menu);
 
     menu_handle_key(book_menu, ch);
-    status_handle_key(statusbar, ch);
+    if (status_handle_key(statusbar, ch, book_menu)) {
+        resized = 1;
+    }
 
     char *search_term = status_get_search_term(statusbar);
 
@@ -194,15 +187,18 @@ int main(int argc, char *argv[])
     init_screen();
 
     statusbar = status_create();
+    char msg[20] = "Enter book:";
+    status_set_msg(statusbar, (char *) &msg);
     book_menu = menu_create((mitem_t *) & all_books, NUMBER_OF_BOOKS,
                             sizeof(bookinfo_t), 20);
     get_winsize();
     menu_recalculate_dims(book_menu, winsz);
     resized = 1;
 #ifdef EMSCRIPTEN
-    emscripten_set_main_loop(one_iter, 1000 / 50, FALSE);
+    emscripten_set_main_loop(loop_to_select_book, 1000 / 50, FALSE);
 #else
-    for (;;one_iter()) napms(50);
+    for (;; loop_to_select_book())
+        napms(50);
 #endif
     return 9;
 }

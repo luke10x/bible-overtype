@@ -58,6 +58,7 @@ struct menu_t {
     size_t item_size;
     unsigned short all_items_count; // How many unfiltered items there are
     unsigned short filtered_items_count;    // How many left after filtering
+    char *search_term;
     unsigned short item_format_len; // Item label (number of multibyte chars + '\0')
     unsigned short selected_index;  // Currently selected item
 
@@ -74,6 +75,7 @@ struct menu_t {
 
 void menu_filter(menu_t * self, char *search)
 {
+    self->search_term = search;
     mitem_t *selected_ptr = &self->filtered_items[self->selected_index];
     int selected_is_in_new_set = 0;
     self->filtered_items_count = 0; // Will be increased during this function
@@ -189,22 +191,22 @@ void _draw_one_book(menu_t * self, int y, int x, bookinfo_t book, int key,
 
     write_here(self, y, x * BOOK_FORMAT_LEN, color_pair, s, winsz);
 
-    /*
-       // Uncomment this later TODO (need to think how to pass along the search term)
-       int pos = strpos(strlwr(s), strlwr(search));
 
-       char *highlighted = malloc(strlen(search) + 1);
-       highlighted[strlen(search)] = 0;
-       memcpy(highlighted, s + pos, strlen(search));
+    // Uncomment this later TODO (need to think how to pass along the search term)
+    int pos = strpos(strlwr(s), strlwr(self->search_term));
 
-       int color_pair_search = PAIR_SEARCH_HIGHLIGHT;
-       if (key == selected) {
-       color_pair_search = PAIR_SEARCH_SELECTED;
-       }
+    char *highlighted = malloc(strlen(self->search_term) + 1);
+    highlighted[strlen(self->search_term)] = 0;
+    memcpy(highlighted, s + pos, strlen(self->search_term));
 
-       write_here(y, x * BOOK_FORMAT_LEN + pos, color_pair_search,
-       highlighted);
-     */
+    int color_pair_search = PAIR_SEARCH_HIGHLIGHT;
+    if (key == self->selected_index) {
+        color_pair_search = PAIR_SEARCH_SELECTED;
+    }
+
+    write_here(self, y, x * BOOK_FORMAT_LEN + pos, color_pair_search,
+               highlighted, winsz);
+
 }
 
 void menu_render(menu_t * self, struct winsize winsz)
@@ -231,7 +233,7 @@ void menu_render(menu_t * self, struct winsize winsz)
                 break;
 
             // Again book specific...
-            const bookinfo_t book = self->all_items[i].bookinfo;
+            const bookinfo_t book = self->filtered_items[i].bookinfo;
             _draw_one_book(self, y, x, book, i, winsz);
 
             i++;
@@ -293,6 +295,11 @@ unsigned short menu_get_selected_index(menu_t * self)
 unsigned short menu_get_delta(menu_t * self)
 {
     return self->delta;
+}
+
+unsigned short menu_get_filtered_item_count(menu_t * self)
+{
+    return self->filtered_items_count;
 }
 
 menu_t *menu_create(const mitem_t * all_items,
