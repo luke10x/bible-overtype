@@ -25,23 +25,10 @@ struct bookinfo_t {
     char *title;
 };
 typedef struct bookinfo_t bookinfo_t;
-
 typedef union mitem_t {
   bookinfo_t bookinfo;
   unsigned int chapter;
 } mitem_t;
-
-// typedef struct mitem_t mitem_t; 
-
-menu_t *menu_create(
-  const mitem_t *all_items,
-  unsigned short all_items_count,
-  size_t item_size,
-  unsigned short item_format_len
-);
-
-
-// #include "./menu.h"
 
 // TODO move them to utils
 char *strlwr(char *input)
@@ -124,9 +111,6 @@ unsigned short _get_pad_width(menu_t *self) {
 
 // TODO pass winsz or better canvas as a param
 void menu_recalculate_dims(menu_t *self, struct winsize winsz) {
-
-
-
     self->visible_columns = ((int) (winsz.ws_col / self->item_format_len) - 1);
     if ((winsz.ws_col % self->item_format_len) > 0) {
         self->visible_columns++;
@@ -219,6 +203,14 @@ void menu_render(menu_t *self, struct winsize winsz) {
     delwin(self->pad);
 
     self->pad = newpad(winsz.ws_row - 1, winsz.ws_col);
+    if (self->pad == NULL) {
+        char *s = malloc(300);
+        sprintf(s, "Pad is not set newpad(%d, %d); failed", winsz.ws_row - 1, winsz.ws_col);
+        perror(s);
+        endwin();
+        exit(1);
+    }
+
     scrollok(self->pad, 1);
     wclear(self->pad);
 
@@ -261,10 +253,15 @@ void menu_handle_key(menu_t *self, char ch) {
             self->selected_index -= self->height;
         }
     } else if (ch == 5) {
-        if ((self->selected_index + self->height) < self->filtered_items_count) {
+        unsigned short columns = (int) (self->filtered_items_count / self->height) ;
+        if (columns * self->height < self->filtered_items_count) {
+            columns++;
+        }
+        if (columns * self->height > self->selected_index + self->height) {
             self->selected_index += self->height;
-        } else if ((self->filtered_items_count - (self->filtered_items_count % self->height) > self->selected_index)) {
-            self->selected_index = self->filtered_items_count - 1;
+            if (self->selected_index >= self->filtered_items_count ) {
+                self->selected_index = self->filtered_items_count - 1;
+            }
         }
     }
 }
@@ -277,15 +274,12 @@ unsigned short menu_get_delta(menu_t *self) {
     return self->delta;
 }
 
-
 menu_t *menu_create(
   const mitem_t *all_items,
   unsigned short all_items_count,
   size_t item_size,
   unsigned short item_format_len
 ) {
-  bookinfo_t *boo = &all_items[0].bookinfo;
-
   menu_t *self = malloc(sizeof(menu_t));
   self->item_size = item_size;
   self->item_format_len = item_format_len;

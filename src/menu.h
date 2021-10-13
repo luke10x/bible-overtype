@@ -6,18 +6,8 @@
 #include <string.h>
 #include <sys/ioctl.h>
 
-// #define PAIR_STATUS           1
-// #define PAIR_BOOK             2
-// #define PAIR_BOOK_SELECTED    3
-// #define PAIR_BOOK_HIGHLIGHT   4
-// #define PAIR_BOOK_DISABLED    5
-// #define PAIR_BOOK_SECTION     6
-// #define PAIR_SEARCH           7
-// #define PAIR_SEARCH_HIGHLIGHT 8
-// #define PAIR_SEARCH_SELECTED  9
-
+// These also need to be repeaded in the implementation file
 typedef struct menu_t menu_t; 
-
 struct bookinfo_t {
     unsigned short int id;
     unsigned short int chapters;
@@ -29,10 +19,6 @@ typedef union mitem_t {
   bookinfo_t bookinfo;
   unsigned int chapter;
 } mitem_t;
-
-// typedef struct mitem_t mitem_t; 
-
-
 
 menu_t *menu_create(
   const mitem_t *all_items,

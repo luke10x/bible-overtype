@@ -20,7 +20,7 @@ empty:
 	# cc -Wall -ggdb -O0 -o bible_ empty.c $$(ncursesw5-config --cflags --libs)
 
 clean:
-	rm -f overtype overtype.pid bible *.c~ *.wasm *.js bible_ empty
+	rm -f overtype overtype.pid bible *.c~ *.wasm *.js empty obj/*
 
 indent:
 	indent -kr -ts4 -nut -l80 *.c
@@ -30,10 +30,10 @@ debian:
 
 bible.js:
 	emcc -I../emcurses \
-		-o bible.js empty.c ../emcurses/emscripten/libpdcurses.so \
-		--pre-js ../emcurses/emscripten/termlib.js
-
-rain.js:
-	emcc -I../emcurses \
-		-o rain.js rain.c ../emcurses/emscripten/libpdcurses.so \
+		src/menu.c \
+		-c -o obj/bible.bc.o
+		
+	emcc -s ALLOW_MEMORY_GROWTH=1 \
+	  -I../emcurses \
+		-o bible.js empty.c obj/bible.bc.o ../emcurses/emscripten/libpdcurses.so \
 		--pre-js ../emcurses/emscripten/termlib.js

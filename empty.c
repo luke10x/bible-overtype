@@ -23,7 +23,6 @@
 
 #define NUMBER_OF_BOOKS       66
 
-
 bookinfo_t all_books[NUMBER_OF_BOOKS] = {
     {.id = 1,.title = "Genesis",.chapters = 50 },
     {.id = 2,.title = "Exodus",.chapters = 40 },
@@ -109,7 +108,6 @@ static void init_colors()
     init_pair(PAIR_SEARCH_SELECTED, COLOR_WHITE + 8, COLOR_GREEN);
 }
 
-// WINDOW *pad;
 struct winsize winsz;
 int resized = 0;
 
@@ -117,6 +115,11 @@ menu_t * book_menu;
 
 void get_winsize()
 {
+
+#ifdef EMSCRIPTEN
+    winsz.ws_col = 80;
+    winsz.ws_row = 24;
+#else
     struct winsize new_winsz;
     ioctl(0, TIOCGWINSZ, &new_winsz);
 
@@ -124,19 +127,11 @@ void get_winsize()
         winsz = new_winsz;
         resized = 1;
     }
+#endif
 }
 
 static void one_iter()
 {
-    attron(PAIR_BOOK_SELECTED);
-    // addstr("storas");
-    attroff(PAIR_BOOK_SELECTED);
-
-    int z = rand() % 3;
-    chtype color = COLOR_PAIR(z);
-    attrset(color);
-
-
     char ch = getch();
     if (ch == -1 && !resized) return;
     if (ch == 255 && !resized) return; // For my Little Endiam machine mainly
@@ -171,11 +166,6 @@ static void one_iter()
     } else {
         menu_fast_render(book_menu, old_selected_index, winsz);
     }
-
-    // char s[20];
-    // sprintf((char *)&s, "charX: %d", ch);
-    // addstr(s);
-  
 }
 
 int main(int argc, char *argv[])
@@ -218,8 +208,4 @@ int main(int argc, char *argv[])
 #endif
 
 return 9;
-
-
-
-
 }

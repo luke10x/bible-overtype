@@ -3,5 +3,7 @@ bible
 *.c~
 overtype.log
 overtype.pid
-bible.js
-*.wasm
+empty
+obj/*
+#bible.js
+#*.wasm
