@@ -109,6 +109,24 @@ static void init_colors()
     init_pair(PAIR_SEARCH_SELECTED, COLOR_WHITE + 8, COLOR_GREEN);
 }
 
+static void init_screen()
+{
+#ifdef XCURSES
+    Xinitscr(argc, argv);
+#else
+    initscr();
+#endif
+    if (has_colors()) {
+        init_colors();
+    }
+    clear();
+    nl();
+    noecho();
+    curs_set(0);
+    timeout(0);
+    keypad(stdscr, TRUE);
+}
+
 struct winsize winsz;
 int resized = 0;
 
@@ -173,20 +191,7 @@ static void one_iter()
 
 int main(int argc, char *argv[])
 {
-#ifdef XCURSES
-    Xinitscr(argc, argv);
-#else
-    initscr();
-#endif
-    if (has_colors()) {
-        init_colors();
-    }
-    clear();
-    nl();
-    noecho();
-    curs_set(0);
-    timeout(0);
-    keypad(stdscr, TRUE);
+    init_screen();
 
     statusbar = status_create();
     book_menu = menu_create((mitem_t *) & all_books, NUMBER_OF_BOOKS,
@@ -197,11 +202,7 @@ int main(int argc, char *argv[])
 #ifdef EMSCRIPTEN
     emscripten_set_main_loop(one_iter, 1000 / 50, FALSE);
 #else
-    for (;;) {
-        one_iter();
-        napms(50);
-    }
+    for (;;one_iter()) napms(50);
 #endif
-
     return 9;
 }
