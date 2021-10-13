@@ -17,7 +17,7 @@
 #define PAIR_SEARCH_HIGHLIGHT 8
 #define PAIR_SEARCH_SELECTED  9
 
-typedef struct menu_t menu_t; 
+typedef struct menu_t menu_t;
 
 struct bookinfo_t {
     unsigned short int id;
@@ -26,8 +26,8 @@ struct bookinfo_t {
 };
 typedef struct bookinfo_t bookinfo_t;
 typedef union mitem_t {
-  bookinfo_t bookinfo;
-  unsigned int chapter;
+    bookinfo_t bookinfo;
+    unsigned int chapter;
 } mitem_t;
 
 // TODO move them to utils
@@ -53,27 +53,28 @@ int strpos(char *haystack, char *needle)
 }
 
 struct menu_t {
-  const mitem_t *all_items;      // This is the source of the data
-  mitem_t *filtered_items;
-  size_t item_size;
-  unsigned short all_items_count; // How many unfiltered items there are
-  unsigned short filtered_items_count; // How many left after filtering
-  unsigned short item_format_len;    // Item label (number of multibyte chars + '\0')
-  unsigned short selected_index;     // Currently selected item
+    const mitem_t *all_items;   // This is the source of the data
+    mitem_t *filtered_items;
+    size_t item_size;
+    unsigned short all_items_count; // How many unfiltered items there are
+    unsigned short filtered_items_count;    // How many left after filtering
+    unsigned short item_format_len; // Item label (number of multibyte chars + '\0')
+    unsigned short selected_index;  // Currently selected item
 
-  // dims
-  unsigned short visible_columns;     // how many columns of items the window can fit
-  unsigned short height;              // in how many rows the items will be arranged
-  unsigned short delta;               // how many columns (or rows) skipped before starting to show
-  unsigned short hpadding;               // space left free at the sides of the window
-  unsigned short vpadding;               // space left free at the bottom and the top of the window
+    // dims
+    unsigned short visible_columns; // how many columns of items the window can fit
+    unsigned short height;      // in how many rows the items will be arranged
+    unsigned short delta;       // how many columns (or rows) skipped before starting to show
+    unsigned short hpadding;    // space left free at the sides of the window
+    unsigned short vpadding;    // space left free at the bottom and the top of the window
 
-  // Should be extracted to canvas
-  WINDOW *pad;
+    // Should be extracted to canvas
+    WINDOW *pad;
 };
 
-void menu_filter(menu_t *self, char *search) {
-    mitem_t* selected_ptr = &self->filtered_items[self->selected_index];
+void menu_filter(menu_t * self, char *search)
+{
+    mitem_t *selected_ptr = &self->filtered_items[self->selected_index];
     int selected_is_in_new_set = 0;
     self->filtered_items_count = 0; // Will be increased during this function
     char *item_label = malloc(self->item_format_len * sizeof(char));
@@ -89,8 +90,10 @@ void menu_filter(menu_t *self, char *search) {
                              strlwr(search));
 
         if (found != NULL) {
-            self->filtered_items[self->filtered_items_count] = self->all_items[i];
-            if (selected_ptr == &self->filtered_items[self->filtered_items_count]) {
+            self->filtered_items[self->filtered_items_count] =
+                self->all_items[i];
+            if (selected_ptr ==
+                &self->filtered_items[self->filtered_items_count]) {
                 self->selected_index = self->filtered_items_count;
                 selected_is_in_new_set = 1;
             }
@@ -103,14 +106,16 @@ void menu_filter(menu_t *self, char *search) {
 }
 
 // Should be exposed through .h?
-unsigned short _get_pad_width(menu_t *self) {
+unsigned short _get_pad_width(menu_t * self)
+{
     int columns = (int) (self->filtered_items_count / self->height) + 1;
     return columns * self->item_format_len;
 }
 
 
 // TODO pass winsz or better canvas as a param
-void menu_recalculate_dims(menu_t *self, struct winsize winsz) {
+void menu_recalculate_dims(menu_t * self, struct winsize winsz)
+{
     self->visible_columns = ((int) (winsz.ws_col / self->item_format_len) - 1);
     if ((winsz.ws_col % self->item_format_len) > 0) {
         self->visible_columns++;
@@ -124,7 +129,8 @@ void menu_recalculate_dims(menu_t *self, struct winsize winsz) {
         self->height = winsz.ws_row - 1;
     }
 
-    while (((int) (self->selected_index / self->height)) >= ((int) (self->delta + self->visible_columns))) {
+    while (((int) (self->selected_index / self->height)) >=
+           ((int) (self->delta + self->visible_columns))) {
         self->delta++;
     }
     while (((int) (self->selected_index / self->height)) < self->delta) {
@@ -149,7 +155,8 @@ void menu_recalculate_dims(menu_t *self, struct winsize winsz) {
     self->vpadding = (int) ((winsz.ws_row - self->height) / 2);
 }
 
-void write_here(menu_t *self, const int row, const int col, int color_pair, char *str, struct winsize winsz)
+void write_here(menu_t * self, const int row, const int col, int color_pair,
+                char *str, struct winsize winsz)
 {
     wmove(self->pad, row, col);
     wattron(self->pad, COLOR_PAIR(color_pair));
@@ -164,7 +171,8 @@ void write_here(menu_t *self, const int row, const int col, int color_pair, char
 }
 
 // Perhaps it is already outside of this class business to draw it
-void _draw_one_book(menu_t *self, int y, int x, bookinfo_t book, int key, struct winsize winsz)
+void _draw_one_book(menu_t * self, int y, int x, bookinfo_t book, int key,
+                    struct winsize winsz)
 {
     /* FIXME depends where this code will ter be moved,
      * it may have access to the global constant
@@ -182,30 +190,32 @@ void _draw_one_book(menu_t *self, int y, int x, bookinfo_t book, int key, struct
     write_here(self, y, x * BOOK_FORMAT_LEN, color_pair, s, winsz);
 
     /*
-    // Uncomment this later TODO (need to think how to pass along the search term)
-    int pos = strpos(strlwr(s), strlwr(search));
+       // Uncomment this later TODO (need to think how to pass along the search term)
+       int pos = strpos(strlwr(s), strlwr(search));
 
-    char *highlighted = malloc(strlen(search) + 1);
-    highlighted[strlen(search)] = 0;
-    memcpy(highlighted, s + pos, strlen(search));
+       char *highlighted = malloc(strlen(search) + 1);
+       highlighted[strlen(search)] = 0;
+       memcpy(highlighted, s + pos, strlen(search));
 
-    int color_pair_search = PAIR_SEARCH_HIGHLIGHT;
-    if (key == selected) {
-        color_pair_search = PAIR_SEARCH_SELECTED;
-    }
-    
-    write_here(y, x * BOOK_FORMAT_LEN + pos, color_pair_search,
-               highlighted);
-    */
+       int color_pair_search = PAIR_SEARCH_HIGHLIGHT;
+       if (key == selected) {
+       color_pair_search = PAIR_SEARCH_SELECTED;
+       }
+
+       write_here(y, x * BOOK_FORMAT_LEN + pos, color_pair_search,
+       highlighted);
+     */
 }
 
-void menu_render(menu_t *self, struct winsize winsz) {
+void menu_render(menu_t * self, struct winsize winsz)
+{
     delwin(self->pad);
 
     self->pad = newpad(winsz.ws_row - 1, winsz.ws_col);
     if (self->pad == NULL) {
         char *s = malloc(300);
-        sprintf(s, "Pad is not set newpad(%d, %d); failed", winsz.ws_row - 1, winsz.ws_col);
+        sprintf(s, "Pad is not set newpad(%d, %d); failed", winsz.ws_row - 1,
+                winsz.ws_col);
         perror(s);
         endwin();
         exit(1);
@@ -229,19 +239,27 @@ void menu_render(menu_t *self, struct winsize winsz) {
     }
 }
 
-void menu_fast_render(menu_t *self, int old_selected_index, struct winsize winsz) {
+void menu_fast_render(menu_t * self, int old_selected_index,
+                      struct winsize winsz)
+{
     int y = self->selected_index % self->height;
     int x = (int) (self->selected_index / self->height) - self->delta;
-    _draw_one_book(self, y, x, self->filtered_items[self->selected_index].bookinfo, self->selected_index, winsz);
+    _draw_one_book(self, y, x,
+                   self->filtered_items[self->selected_index].bookinfo,
+                   self->selected_index, winsz);
 
     y = old_selected_index % self->height;
     x = (int) (old_selected_index / self->height) - self->delta;
-    _draw_one_book(self, y, x, self->filtered_items[old_selected_index].bookinfo, old_selected_index, winsz);
+    _draw_one_book(self, y, x,
+                   self->filtered_items[old_selected_index].bookinfo,
+                   old_selected_index, winsz);
 }
 
-void menu_handle_key(menu_t *self, char ch) {
+void menu_handle_key(menu_t * self, char ch)
+{
     if (ch == 2) {
-        if ((self->selected_index % self->height) < self->height - 1 && (self->selected_index + 1) < self->filtered_items_count) {
+        if ((self->selected_index % self->height) < self->height - 1
+            && (self->selected_index + 1) < self->filtered_items_count) {
             self->selected_index++;
         }
     } else if (ch == 3) {
@@ -253,43 +271,44 @@ void menu_handle_key(menu_t *self, char ch) {
             self->selected_index -= self->height;
         }
     } else if (ch == 5) {
-        unsigned short columns = (int) (self->filtered_items_count / self->height) ;
+        unsigned short columns =
+            (int) (self->filtered_items_count / self->height);
         if (columns * self->height < self->filtered_items_count) {
             columns++;
         }
         if (columns * self->height > self->selected_index + self->height) {
             self->selected_index += self->height;
-            if (self->selected_index >= self->filtered_items_count ) {
+            if (self->selected_index >= self->filtered_items_count) {
                 self->selected_index = self->filtered_items_count - 1;
             }
         }
     }
 }
 
-unsigned short menu_get_selected_index(menu_t *self) {
+unsigned short menu_get_selected_index(menu_t * self)
+{
     return self->selected_index;
 }
 
-unsigned short menu_get_delta(menu_t *self) {
+unsigned short menu_get_delta(menu_t * self)
+{
     return self->delta;
 }
 
-menu_t *menu_create(
-  const mitem_t *all_items,
-  unsigned short all_items_count,
-  size_t item_size,
-  unsigned short item_format_len
-) {
-  menu_t *self = malloc(sizeof(menu_t));
-  self->item_size = item_size;
-  self->item_format_len = item_format_len;
-  self->all_items = all_items;
-  self->all_items_count = all_items_count;
+menu_t *menu_create(const mitem_t * all_items,
+                    unsigned short all_items_count,
+                    size_t item_size, unsigned short item_format_len)
+{
+    menu_t *self = malloc(sizeof(menu_t));
+    self->item_size = item_size;
+    self->item_format_len = item_format_len;
+    self->all_items = all_items;
+    self->all_items_count = all_items_count;
 
-  self->filtered_items = malloc(all_items_count * item_size);
-  self->selected_index = 0;
+    self->filtered_items = malloc(all_items_count * item_size);
+    self->selected_index = 0;
 
-  menu_filter(self, "");
+    menu_filter(self, "");
 
-  return self;
+    return self;
 }

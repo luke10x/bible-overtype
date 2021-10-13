@@ -1,6 +1,6 @@
 overtype
 bible
-*.c~
+**.c~
 overtype.log
 overtype.pid
 empty

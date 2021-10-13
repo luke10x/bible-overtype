@@ -17,13 +17,11 @@ empty:
 		-o empty \
 		$$(ncursesw5-config --cflags --libs)
 
-	# cc -Wall -ggdb -O0 -o bible_ empty.c $$(ncursesw5-config --cflags --libs)
-
 clean:
 	rm -f overtype overtype.pid bible *.c~ *.wasm *.js empty obj/*
 
 indent:
-	indent -kr -ts4 -nut -l80 *.c
+	indent -kr -ts4 -nut -l80 -br *.c src/*.c src/*.h
 
 debian:
 	apt install libncursesw5-dev libunistring-dev libutf8proc-dev

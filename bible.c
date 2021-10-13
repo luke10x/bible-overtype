@@ -120,22 +120,23 @@ struct book books[NUMBER_OF_BOOKS];
 int books_len = 0;
 
 int all_chapters[MAX_CHAPTER] = {
-     1,   2,   3,   4,   5,   6,   7,   8,   9,   10,
-     11,  12,  13,  14,  15,  16,  17,  18,  19,  20,
-     21,  22,  23,  24,  25,  26,  27,  28,  29,  30,
-     31,  32,  33,  34,  35,  36,  37,  38,  39,  40,
-     41,  42,  43,  44,  45,  46,  47,  48,  49,  50,
-     51,  52,  53,  54,  55,  56,  57,  58,  59,  60,
-     61,  62,  63,  64,  65,  66,  67,  68,  69,  70,
-     71,  72,  73,  74,  75,  76,  77,  78,  79,  80,
-     81,  82,  83,  84,  85,  86,  87,  88,  89,  90,
-     91,  92,  93,  94,  95,  96,  97,  98,  99, 100,
+    1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+    11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+    21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
+    31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
+    41, 42, 43, 44, 45, 46, 47, 48, 49, 50,
+    51, 52, 53, 54, 55, 56, 57, 58, 59, 60,
+    61, 62, 63, 64, 65, 66, 67, 68, 69, 70,
+    71, 72, 73, 74, 75, 76, 77, 78, 79, 80,
+    81, 82, 83, 84, 85, 86, 87, 88, 89, 90,
+    91, 92, 93, 94, 95, 96, 97, 98, 99, 100,
     101, 102, 103, 104, 105, 106, 107, 108, 109, 110,
     111, 112, 113, 114, 115, 116, 117, 118, 119, 120,
     121, 122, 123, 124, 125, 126, 127, 128, 129, 130,
     131, 132, 133, 134, 135, 136, 137, 138, 139, 140,
     141, 142, 143, 144, 145, 146, 147, 148, 149, 150
 };
+
 int chapters[MAX_CHAPTER];
 int chapters_len = 0;
 
@@ -195,11 +196,12 @@ void displayStatusLine()
         wmove(bar, 0, 0);
         wattron(bar, COLOR_PAIR(PAIR_STATUS));
         if (selected_book == NULL) {
-           waddstr(bar, "Select a book using cursor keys or search by name.");
+            waddstr(bar, "Select a book using cursor keys or search by name.");
         } else {
-            char * s = malloc(200);
-            sprintf(s, "%s selected. Now select a chapter.", selected_book->title);
-           waddstr(bar, s);
+            char *s = malloc(200);
+            sprintf(s, "%s selected. Now select a chapter.",
+                    selected_book->title);
+            waddstr(bar, s);
         }
         wattroff(bar, COLOR_PAIR(PAIR_STATUS));
         curs_set(0);
@@ -247,7 +249,8 @@ static void init_colors()
     clear();
 }
 
-void draw_one_chapter(int y, int x, int chapter, int key) {
+void draw_one_chapter(int y, int x, int chapter, int key)
+{
     char s[BOOK_FORMAT_LEN];
 
     sprintf(s, "%3d", chapter);
@@ -269,8 +272,7 @@ void draw_one_chapter(int y, int x, int chapter, int key) {
     if (key == selected) {
         color_pair_search = PAIR_SEARCH_SELECTED;
     }
-    write_here(y, x * CHAPTER_FORMAT_LEN + pos, color_pair_search,
-               highlighted);
+    write_here(y, x * CHAPTER_FORMAT_LEN + pos, color_pair_search, highlighted);
 }
 
 void draw_one_book(int y, int x, struct book book, int key)
@@ -301,8 +303,7 @@ void draw_one_book(int y, int x, struct book book, int key)
     if (key == selected) {
         color_pair_search = PAIR_SEARCH_SELECTED;
     }
-    write_here(y, x * BOOK_FORMAT_LEN + pos, color_pair_search,
-               highlighted);
+    write_here(y, x * BOOK_FORMAT_LEN + pos, color_pair_search, highlighted);
 }
 
 void recalculate_height()
@@ -456,7 +457,8 @@ void filter_chapters()
     }
 }
 
-void recalculate_chapters() {
+void recalculate_chapters()
+{
     visible_columns = ((int) (winsz.ws_col / CHAPTER_FORMAT_LEN));
 
     height = (int) (chapters_len / visible_columns) + 1;
@@ -479,14 +481,15 @@ void recalculate_chapters() {
         }
     }
 
-    vpadding = (int) ((winsz.ws_row - height) / 2); 
+    vpadding = (int) ((winsz.ws_row - height) / 2);
 }
 
 
 
-void redraw_chapters() {
-    int columns = 10 ;
-    
+void redraw_chapters()
+{
+    int columns = 10;
+
     delwin(pad);
     pad_width = columns * CHAPTER_FORMAT_LEN + 0;
 
@@ -504,7 +507,7 @@ void redraw_chapters() {
             i++;
         }
     }
-    
+
     displayStatusLine();
 }
 
@@ -611,7 +614,7 @@ int main(void)
     }
 
     filter_chapters();
-    
+
     resized = 1;
     while ((ch = getch()) != 10) {
         get_winsize();
@@ -636,12 +639,13 @@ int main(void)
                 selected -= visible_columns;
             }
         } else if (ch == 4) {
-    
+
             if ((selected) % visible_columns > 0) {
                 selected--;
             }
         } else if (ch == 5) {
-            if (((selected +1) % visible_columns > 0) && (selected+ 1) < chapters_len) {
+            if (((selected + 1) % visible_columns > 0)
+                && (selected + 1) < chapters_len) {
                 selected++;
             }
         } else if (ch > '0' && ch < '9' && (search_len < 20)) {
@@ -678,8 +682,8 @@ int main(void)
 
     char s[4];
     sprintf((char *) &s, "%d", chapters[selected]);
-    char* args[] = { "python3", "printchapter", selected_book->title, s, NULL };
-    if(execvp("python3", args) == -1) {
+    char *args[] = { "python3", "printchapter", selected_book->title, s, NULL };
+    if (execvp("python3", args) == -1) {
         printf("\nfailed connection\n");
     }
 

@@ -8,7 +8,7 @@
 #include "./src/menu.h"
 
 #ifdef EMSCRIPTEN
-    #include <emscripten.h>
+#include <emscripten.h>
 #endif
 
 #define PAIR_STATUS           1
@@ -111,7 +111,7 @@ static void init_colors()
 struct winsize winsz;
 int resized = 0;
 
-menu_t * book_menu;
+menu_t *book_menu;
 
 void get_winsize()
 {
@@ -133,18 +133,20 @@ void get_winsize()
 static void one_iter()
 {
     char ch = getch();
-    if (ch == -1 && !resized) return;
-    if (ch == 255 && !resized) return; // For my Little Endiam machine mainly
+    if (ch == -1 && !resized)
+        return;
+    if (ch == 255 && !resized)
+        return;                 // For my Little Endiam machine mainly
 
     if (ch == 27) {
-            curs_set(1);
-            endwin();
+        curs_set(1);
+        endwin();
 #ifdef EMSCRIPTEN
-            emscripten_cancel_main_loop();
+        emscripten_cancel_main_loop();
 #endif
-            return;
+        return;
     }
-    
+
     get_winsize();
 
     old_selected_index = menu_get_selected_index(book_menu);
@@ -159,10 +161,10 @@ static void one_iter()
 
 
     if (resized || (old_delta != menu_get_delta(book_menu))) {
-            resized = 0;
-            clear();
-            
-            menu_render(book_menu, winsz);
+        resized = 0;
+        clear();
+
+        menu_render(book_menu, winsz);
     } else {
         menu_fast_render(book_menu, old_selected_index, winsz);
     }
@@ -178,7 +180,8 @@ int main(int argc, char *argv[])
     if (has_colors()) {
         init_colors();
 #if defined(NCURSES_VERSION) || (defined(PDC_BUILD) && PDC_BUILD > 3000)
-            if (use_default_colors() == OK) {}
+        if (use_default_colors() == OK) {
+        }
 #endif
     }
     clear();
@@ -190,22 +193,21 @@ int main(int argc, char *argv[])
 
     get_winsize();
 
-    book_menu = menu_create(
-        (mitem_t *)&all_books, NUMBER_OF_BOOKS, sizeof(bookinfo_t), 20);
+    book_menu = menu_create((mitem_t *) & all_books, NUMBER_OF_BOOKS,
+                            sizeof(bookinfo_t), 20);
 
     menu_recalculate_dims(book_menu, winsz);
 
     resized = 1;
 
 #ifdef EMSCRIPTEN
-    emscripten_set_main_loop(one_iter, 1000/50, FALSE);
+    emscripten_set_main_loop(one_iter, 1000 / 50, FALSE);
 #else
-    for (;;)
-    {
+    for (;;) {
         one_iter();
         napms(50);
     }
 #endif
 
-return 9;
+    return 9;
 }
