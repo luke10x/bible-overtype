@@ -4,11 +4,23 @@ overtype:
 bible:
 	cc -Wall -ggdb -O0 -o bible bible.c $$(ncursesw5-config --cflags --libs)
 
-bible_:
-	cc -Wall -ggdb -O0 -o bible_ empty.c $$(ncursesw5-config --cflags --libs)
+empty:
+	mkdir -p ./obj
+
+	cc -Wall -ggdb -O0 \
+		-c src/menu.c \
+		-g -o obj/menu.o \
+		$$(ncursesw5-config --cflags --libs)
+
+	cc -Wall -ggdb -O0 \
+		empty.c obj/menu.o \
+		-o empty \
+		$$(ncursesw5-config --cflags --libs)
+
+	# cc -Wall -ggdb -O0 -o bible_ empty.c $$(ncursesw5-config --cflags --libs)
 
 clean:
-	rm -f overtype overtype.pid bible *.c~ *.wasm *.js bible_
+	rm -f overtype overtype.pid bible *.c~ *.wasm *.js bible_ empty
 
 indent:
 	indent -kr -ts4 -nut -l80 *.c
