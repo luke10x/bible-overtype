@@ -86,30 +86,24 @@ struct menu_t {
 };
 
 void menu_filter(menu_t *self, char *search) {
-    mitem_t* selected_ptr = &self->filtered_items[self->selected_index * self->item_size];
+    mitem_t* selected_ptr = &self->filtered_items[self->selected_index];
     int selected_is_in_new_set = 0;
     self->filtered_items_count = 0; // Will be increased during this function
-
     char *item_label = malloc(self->item_format_len * sizeof(char));
     for (int i = 0; i < self->all_items_count; i++) {
 
-
         // TODO here it is now assuming is a book item,
         // but it also can be chapter item
-        const bookinfo_t *book = &self->all_items[i * self->item_size].bookinfo;
-        sprintf(
-          item_label,
-          "%2d. %-15s",
-          book->id,
-          book->title);
+        const bookinfo_t book = self->all_items[i].bookinfo;
+        sprintf(item_label, "%2d. %-15s", book.id, book.title);
 
         // TODO separate string utils module
         char *found = strstr(strlwr(item_label),
                              strlwr(search));
 
         if (found != NULL) {
-            self->filtered_items[self->filtered_items_count * self->item_size] = self->all_items[i];
-            if (selected_ptr == &self->filtered_items[self->filtered_items_count * self->item_size]) {
+            self->filtered_items[self->filtered_items_count] = self->all_items[i];
+            if (selected_ptr == &self->filtered_items[self->filtered_items_count]) {
                 self->selected_index = self->filtered_items_count;
                 selected_is_in_new_set = 1;
             }
@@ -130,12 +124,15 @@ unsigned short _get_pad_width(menu_t *self) {
 
 // TODO pass winsz or better canvas as a param
 void menu_recalculate_dims(menu_t *self, struct winsize winsz) {
+
+
+
     self->visible_columns = ((int) (winsz.ws_col / self->item_format_len) - 1);
     if ((winsz.ws_col % self->item_format_len) > 0) {
         self->visible_columns++;
     }
-
     self->height = (int) (self->filtered_items_count / self->visible_columns);
+
     if ((self->filtered_items_count % self->visible_columns) > 0) {
         self->height++;
     }
@@ -219,8 +216,6 @@ void _draw_one_book(menu_t *self, int y, int x, bookinfo_t book, int key, struct
 }
 
 void menu_render(menu_t *self, struct winsize winsz) {
-    // int columns = (int) (self->filtered_items_count / self->height) + 1;
-
     delwin(self->pad);
 
     self->pad = newpad(winsz.ws_row - 1, winsz.ws_col);
@@ -233,14 +228,23 @@ void menu_render(menu_t *self, struct winsize winsz) {
             if (i >= self->filtered_items_count)
                 break;
 
-
             // Again book specific...
-            const bookinfo_t book = self->all_items[i * self->item_size].bookinfo;
+            const bookinfo_t book = self->all_items[i].bookinfo;
             _draw_one_book(self, y, x, book, i, winsz);
 
             i++;
         }
     }
+}
+
+void menu_fast_render(menu_t *self, int old_selected_index, struct winsize winsz) {
+    int y = self->selected_index % self->height;
+    int x = (int) (self->selected_index / self->height) - self->delta;
+    _draw_one_book(self, y, x, self->filtered_items[self->selected_index].bookinfo, self->selected_index, winsz);
+
+    y = old_selected_index % self->height;
+    x = (int) (old_selected_index / self->height) - self->delta;
+    _draw_one_book(self, y, x, self->filtered_items[old_selected_index].bookinfo, old_selected_index, winsz);
 }
 
 void menu_handle_key(menu_t *self, char ch) {
@@ -265,11 +269,11 @@ void menu_handle_key(menu_t *self, char ch) {
     }
 }
 
-int menu_get_selected_index(menu_t *self) {
+unsigned short menu_get_selected_index(menu_t *self) {
     return self->selected_index;
 }
 
-int menu_get_delta(menu_t *self) {
+unsigned short menu_get_delta(menu_t *self) {
     return self->delta;
 }
 
@@ -280,25 +284,18 @@ menu_t *menu_create(
   size_t item_size,
   unsigned short item_format_len
 ) {
-
-
-    bookinfo_t *boo = &all_items[0].bookinfo;
-//   endwin(); 
-  printf("Konstructor %d.\r\n", boo->chapters);
-  
-  
+  bookinfo_t *boo = &all_items[0].bookinfo;
 
   menu_t *self = malloc(sizeof(menu_t));
   self->item_size = item_size;
   self->item_format_len = item_format_len;
   self->all_items = all_items;
-//   printf("Konstructor2 %d.\r\n", self->all_items[6].bookinfo.chapters);
-//   exit(7);
+  self->all_items_count = all_items_count;
 
   self->filtered_items = malloc(all_items_count * item_size);
   self->selected_index = 0;
 
-  menu_filter(self, NULL);
+  menu_filter(self, "");
 
   return self;
 }

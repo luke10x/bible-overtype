@@ -93,8 +93,7 @@ bookinfo_t all_books[NUMBER_OF_BOOKS] = {
     {.id = 66,.title = "Revelation",.chapters = 22 },
 };
 
-int old_selected_index = 0;
-
+unsigned short old_selected_index;
 
 static void init_colors()
 {
@@ -137,11 +136,12 @@ static void one_iter()
     chtype color = COLOR_PAIR(z);
     attrset(color);
 
+
     char ch = getch();
-    if (ch == -1) return;
-    if (ch == 255) return; // For my Little Endiam machine mainly
-    if (ch == 27)
-    {
+    if (ch == -1 && !resized) return;
+    if (ch == 255 && !resized) return; // For my Little Endiam machine mainly
+
+    if (ch == 27) {
             curs_set(1);
             endwin();
 #ifdef EMSCRIPTEN
@@ -150,19 +150,18 @@ static void one_iter()
             return;
     }
     
-
-
+    get_winsize();
 
     old_selected_index = menu_get_selected_index(book_menu);
     int old_delta = menu_get_delta(book_menu);
 
     menu_handle_key(book_menu, ch);
+    menu_recalculate_dims(book_menu, winsz);
 
     if (ch > '0' && ch < 'z') {
         mvaddch(2, 3, ch);
     }
 
-    menu_recalculate_dims(book_menu, winsz);
 
     if (resized || (old_delta != menu_get_delta(book_menu))) {
             resized = 0;
@@ -170,21 +169,14 @@ static void one_iter()
             
             menu_render(book_menu, winsz);
     } else {
-        menu_render(book_menu, winsz);
-
-        // fast_redraw();
-        // TODO so far we dont have fast....
+        menu_fast_render(book_menu, old_selected_index, winsz);
     }
 
-
-    
     // char s[20];
     // sprintf((char *)&s, "charX: %d", ch);
     // addstr(s);
   
 }
-
-
 
 int main(int argc, char *argv[])
 {
@@ -206,8 +198,14 @@ int main(int argc, char *argv[])
     timeout(0);
     keypad(stdscr, TRUE);
 
+    get_winsize();
+
     book_menu = menu_create(
         (mitem_t *)&all_books, NUMBER_OF_BOOKS, sizeof(bookinfo_t), 20);
+
+    menu_recalculate_dims(book_menu, winsz);
+
+    resized = 1;
 
 #ifdef EMSCRIPTEN
     emscripten_set_main_loop(one_iter, 1000/50, FALSE);

@@ -41,14 +41,13 @@ menu_t *menu_create(
   unsigned short item_format_len
 );
 
-
-
 void menu_filter(menu_t *self, char *search);
 void menu_recalculate_dims(menu_t *self, struct winsize winsz);
 void menu_render(menu_t *self, struct winsize winsz);
+void menu_fast_render(menu_t *self, int old_selected_index, struct winsize winsz);
 void menu_handle_key(menu_t *self, char ch);
 mitem_t *menu_get_selected_item();
-int menu_get_selected_index(menu_t *self);
-int menu_get_delta(menu_t *self);
+unsigned short menu_get_selected_index(menu_t *self);
+unsigned short menu_get_delta(menu_t *self);
 
 #endif
