@@ -6,19 +6,17 @@ bible:
 
 empty:
 	mkdir -p ./obj
-
-	cc -Wall -ggdb -O0 \
-		-c src/menu.c \
-		-g -o obj/menu.o \
+	cd obj && cc -Wall -ggdb -O0 \
+		-c ../src/menu.c ../src/status.c \
 		$$(ncursesw5-config --cflags --libs)
-
+	
 	cc -Wall -ggdb -O0 \
-		empty.c obj/menu.o \
+		empty.c obj/menu.o obj/status.o \
 		-o empty \
 		$$(ncursesw5-config --cflags --libs)
 
 clean:
-	rm -f overtype overtype.pid bible *.c~ *.wasm *.js empty obj/*
+	rm -f overtype overtype.pid bible *~  src/*~  *.wasm *.js empty obj/*
 
 indent:
 	indent -kr -ts4 -nut -l80 -br *.c src/*.c src/*.h
@@ -27,8 +25,9 @@ debian:
 	apt install libncursesw5-dev libunistring-dev libutf8proc-dev
 
 bible.js:
+	mkdir -p ./obj
 	emcc -I../emcurses \
-		src/menu.c \
+		src/menu.c src/status.c \
 		-c -o obj/bible.bc.o
 		
 	emcc -s ALLOW_MEMORY_GROWTH=1 \

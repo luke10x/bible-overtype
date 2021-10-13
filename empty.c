@@ -6,6 +6,7 @@
 #include <string.h>
 
 #include "./src/menu.h"
+#include "./src/status.h"
 
 #ifdef EMSCRIPTEN
 #include <emscripten.h>
@@ -111,11 +112,11 @@ static void init_colors()
 struct winsize winsz;
 int resized = 0;
 
+status_t *statusbar;
 menu_t *book_menu;
 
 void get_winsize()
 {
-
 #ifdef EMSCRIPTEN
     winsz.ws_col = 80;
     winsz.ws_row = 24;
@@ -136,8 +137,7 @@ static void one_iter()
     if (ch == -1 && !resized)
         return;
     if (ch == 255 && !resized)
-        return;                 // For my Little Endiam machine mainly
-
+        return;                 // For my Little Endian machine mainly
     if (ch == 27) {
         curs_set(1);
         endwin();
@@ -153,12 +153,12 @@ static void one_iter()
     int old_delta = menu_get_delta(book_menu);
 
     menu_handle_key(book_menu, ch);
+    status_handle_key(statusbar, ch);
+
+    char *search_term = status_get_search_term(statusbar);
+
+    menu_filter(book_menu, search_term);
     menu_recalculate_dims(book_menu, winsz);
-
-    if (ch > '0' && ch < 'z') {
-        mvaddch(2, 3, ch);
-    }
-
 
     if (resized || (old_delta != menu_get_delta(book_menu))) {
         resized = 0;
@@ -168,6 +168,7 @@ static void one_iter()
     } else {
         menu_fast_render(book_menu, old_selected_index, winsz);
     }
+    status_render(statusbar, winsz);
 }
 
 int main(int argc, char *argv[])
@@ -179,10 +180,6 @@ int main(int argc, char *argv[])
 #endif
     if (has_colors()) {
         init_colors();
-#if defined(NCURSES_VERSION) || (defined(PDC_BUILD) && PDC_BUILD > 3000)
-        if (use_default_colors() == OK) {
-        }
-#endif
     }
     clear();
     nl();
@@ -191,15 +188,12 @@ int main(int argc, char *argv[])
     timeout(0);
     keypad(stdscr, TRUE);
 
-    get_winsize();
-
+    statusbar = status_create();
     book_menu = menu_create((mitem_t *) & all_books, NUMBER_OF_BOOKS,
                             sizeof(bookinfo_t), 20);
-
+    get_winsize();
     menu_recalculate_dims(book_menu, winsz);
-
     resized = 1;
-
 #ifdef EMSCRIPTEN
     emscripten_set_main_loop(one_iter, 1000 / 50, FALSE);
 #else
