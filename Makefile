@@ -30,10 +30,11 @@ bible.js:
 	mkdir -p ./obj
 	emcc -I../emcurses src/status.c -c -o obj/status.bc.o
 	emcc -I../emcurses src/menu.c -c -o obj/menu.bc.o
+	emcc -I../emcurses src/scripture.c -c -o obj/scripture.bc.o
 		
 	emcc -s ALLOW_MEMORY_GROWTH=1 \
 	  -I../emcurses \
-		-o bible.js empty.c obj/menu.bc.o obj/status.bc.o \
+		-o bible.js empty.c obj/menu.bc.o obj/status.bc.o obj/scripture.bc.o  \
 		  ../emcurses/emscripten/libpdcurses.so \
 		--pre-js ../emcurses/emscripten/termlib.js \
 		--preload-file usr/share/bible/
