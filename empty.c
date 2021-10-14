@@ -4,6 +4,8 @@
 #include <locale.h>
 #include <sys/ioctl.h>
 #include <string.h>
+#include <arpa/inet.h>
+
 
 #include "./src/menu.h"
 #include "./src/status.h"
@@ -180,17 +182,42 @@ static void loop_to_select_chapter()
     }
     if (ch == 10) {
         menu_finalize(chapter_menu);
-        // curs_set(1);
-        // endwin();
 #ifdef EMSCRIPTEN
         emscripten_cancel_main_loop();
 #endif
-        endwin();
+        endwin(); // End of story starts here.
 
         bookinfo_t book = menu_get_selected_item(book_menu)->bookinfo;
         int chapter = menu_get_selected_item(chapter_menu)->chapter;
 
         printf("You selected Book of %s chapter %d.\r\n", book.title, chapter); 
+        int absolute_number = 0;
+        int i;
+        for (i = 0; strcmp(all_books[i].title, book.title) != 0; i++) {
+            absolute_number += all_books[i].chapters;
+        }
+        absolute_number += chapter;
+        printf("Which is total %dth chapter in whole Bible.\r\n", absolute_number);
+
+
+        FILE *fp = fopen("chapter-index-kjv.bin","r");
+        fseek( fp, (absolute_number-1) * 2 * sizeof(uint32_t), SEEK_SET );
+    
+        uint32_t bigend_start;
+        uint32_t bigend_end;
+
+        // The file is Big Endian
+        fread(&bigend_start, sizeof(uint32_t), 1, fp);
+        fread(&bigend_end,   sizeof(uint32_t), 1, fp);
+        fclose(fp);
+
+        // On amd64 ntohl is no-op, but it does matter on arm
+        uint32_t start = ntohl(bigend_start);
+        uint32_t end = ntohl(bigend_end);
+
+        printf("RAW Start: %u; End: %u;\r\n", bigend_start, bigend_end);
+        printf("LOC Start: %u; End: %u;\r\n", start, end);
+
         exit(0);
     }
 
@@ -316,32 +343,6 @@ int main(int argc, char *argv[])
         napms(50);   
     }    
 #endif
-
-//     resized = 1;    
-    
-//     bookinfo_t selected_book = menu_get_selected_item(book_menu)->bookinfo;
-
-//     char *m = malloc(30) ;
-//     sprintf(m, "%s selected, now choose a chapter:", selected_book.title);
-//     status_set_msg(statusbar, m);
-//     status_render(statusbar, winsz);
-
-//     mitem_t *inflated_chapters = malloc(MAX_CHAPTER * sizeof(mitem_t));
-
-//     for (int i = 0; i < selected_book.chapters; i++) inflated_chapters[i].chapter = all_chapters[i];
-//     chapter_menu = menu_create(inflated_chapters, selected_book.chapters,
-//                             sizeof(int), CHAPTER_FORMAT_LEN);
-
-// #ifdef EMSCRIPTEN
-//     emscripten_set_main_loop(loop_to_select_chapter, 1000 / 50, FALSE);
-// #else
-//     do {
-//         loop_to_select_chapter();
-//         napms(50);
-//     } while (!menu_is_done(chapter_menu));
-// #endif
-
-
 
     return 9;
 }

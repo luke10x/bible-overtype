@@ -231,11 +231,18 @@ for l in line_yielder(from_file_byte_yielder(filename)):
             result[name]["chapters"][int(l.chapter)]["start"] = l.start
         result[name]["chapters"][int(l.chapter)]["end"] = l.end
         
-import json
-print(json.dumps(result, sort_keys=False, indent=4))
+# import json
+# print(json.dumps(result, sort_keys=False, indent=4))
 
-# print("books:")
-# for b in result:
-#     print(f"- name: {b}")
-#     print(f"  aliases: {result[b]['names']}")
-#     print(f"  chapters: {result[b]['chapters']}")
+with open('chapter-index-kjv.bin', 'wb') as file:
+    # print("books:")
+    for b in result:
+        # print(f"- name: {b}")
+        # print(f"  aliases: {result[b]['names']}")
+        # print(f"  chapters: {result[b]['chapters']}")
+        for c in result[b]['chapters']:
+            # print(f"  each: {result[b]['chapters'][c]}")
+            d = result[b]['chapters'][c]
+            print(d['start'], d['end'])
+            file.write((d['start']).to_bytes(4, byteorder='big', signed=False))
+            file.write((d['end']).to_bytes(4, byteorder='big', signed=False))
