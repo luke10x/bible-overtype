@@ -200,7 +200,7 @@ static void loop_to_select_chapter()
         printf("Which is total %dth chapter in whole Bible.\r\n", absolute_number);
 
 
-        FILE *fp = fopen("chapter-index-kjv.bin","r");
+        FILE *fp = fopen("usr/share/bible/chapter-index-kjv.bin","r");
         fseek( fp, (absolute_number-1) * 2 * sizeof(uint32_t), SEEK_SET );
     
         uint32_t bigend_start;
