@@ -1,9 +1,10 @@
-overtype
-bible
-**.c~
-overtype.log
-overtype.pid
-empty
-obj/*
+/overtype
+/bible
+/obj
+/empty
 #bible.js
 #*.wasm
+**/*.c~
+**/*.h~
+**/*.log
+**/*.pid

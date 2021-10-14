@@ -185,30 +185,31 @@ static void loop_to_select_chapter()
 #ifdef EMSCRIPTEN
         emscripten_cancel_main_loop();
 #endif
-        endwin(); // End of story starts here.
+        endwin();               // End of story starts here.
 
         bookinfo_t book = menu_get_selected_item(book_menu)->bookinfo;
         int chapter = menu_get_selected_item(chapter_menu)->chapter;
 
-        printf("You selected Book of %s chapter %d.\r\n", book.title, chapter); 
+        printf("You selected Book of %s chapter %d.\r\n", book.title, chapter);
         int absolute_number = 0;
         int i;
         for (i = 0; strcmp(all_books[i].title, book.title) != 0; i++) {
             absolute_number += all_books[i].chapters;
         }
         absolute_number += chapter;
-        printf("Which is total %dth chapter in whole Bible.\r\n", absolute_number);
+        printf("Which is total %dth chapter in whole Bible.\r\n",
+               absolute_number);
 
 
-        FILE *fp = fopen("usr/share/bible/chapter-index-kjv.bin","r");
-        fseek( fp, (absolute_number-1) * 2 * sizeof(uint32_t), SEEK_SET );
-    
+        FILE *fp = fopen("usr/share/bible/chapter-index-kjv.bin", "r");
+        fseek(fp, (absolute_number - 1) * 2 * sizeof(uint32_t), SEEK_SET);
+
         uint32_t bigend_start;
         uint32_t bigend_end;
 
         // The file is Big Endian
         fread(&bigend_start, sizeof(uint32_t), 1, fp);
-        fread(&bigend_end,   sizeof(uint32_t), 1, fp);
+        fread(&bigend_end, sizeof(uint32_t), 1, fp);
         fclose(fp);
 
         // On amd64 ntohl is no-op, but it does matter on arm
@@ -246,7 +247,7 @@ static void loop_to_select_chapter()
         menu_fast_render(chapter_menu, old_selected_index, winsz);
     }
     status_render(statusbar, winsz);
-    
+
 }
 
 static void loop_to_select_book()
@@ -271,20 +272,21 @@ static void loop_to_select_book()
 #ifdef EMSCRIPTEN
         emscripten_cancel_main_loop();
 #endif
-        resized = 1;    
-        
+        resized = 1;
+
         bookinfo_t selected_book = menu_get_selected_item(book_menu)->bookinfo;
 
-        char *m = malloc(30) ;
+        char *m = malloc(30);
         sprintf(m, "%s selected, now choose a chapter:", selected_book.title);
         status_set_msg(statusbar, m);
         status_render(statusbar, winsz);
 
         mitem_t *inflated_chapters = malloc(MAX_CHAPTER * sizeof(mitem_t));
 
-        for (int i = 0; i < selected_book.chapters; i++) inflated_chapters[i].chapter = all_chapters[i];
+        for (int i = 0; i < selected_book.chapters; i++)
+            inflated_chapters[i].chapter = all_chapters[i];
         chapter_menu = menu_create(inflated_chapters, selected_book.chapters,
-                                sizeof(int), CHAPTER_FORMAT_LEN);
+                                   sizeof(int), CHAPTER_FORMAT_LEN);
 
 #ifdef EMSCRIPTEN
         emscripten_set_main_loop(loop_to_select_chapter, 1000 / 50, FALSE);
@@ -292,7 +294,7 @@ static void loop_to_select_book()
         for (;;) {
             loop_to_select_chapter();
             napms(50);
-        } 
+        }
 #endif
         return;
     }
@@ -340,8 +342,8 @@ int main(int argc, char *argv[])
 #else
     for (;;) {
         loop_to_select_book();
-        napms(50);   
-    }    
+        napms(50);
+    }
 #endif
 
     return 9;

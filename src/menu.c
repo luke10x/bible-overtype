@@ -301,7 +301,8 @@ void menu_handle_key(menu_t * self, char ch)
     }
 }
 
-mitem_t *menu_get_selected_item(menu_t * self) {
+mitem_t *menu_get_selected_item(menu_t * self)
+{
     return &self->filtered_items[self->selected_index];
 }
 
@@ -320,11 +321,13 @@ unsigned short menu_get_filtered_item_count(menu_t * self)
     return self->filtered_items_count;
 }
 
-unsigned short menu_is_done(menu_t *self) {
+unsigned short menu_is_done(menu_t * self)
+{
     return self->is_done;
 }
 
-void menu_finalize(menu_t *self) {
+void menu_finalize(menu_t * self)
+{
     self->is_done = 1;
 }
 

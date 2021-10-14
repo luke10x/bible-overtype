@@ -46,8 +46,8 @@ unsigned short menu_get_delta(menu_t * self);
 // returns whether search changed and neeeds to be resized
 unsigned short menu_get_filtered_item_count(menu_t * self);
 
-unsigned short menu_is_done(menu_t *self);
+unsigned short menu_is_done(menu_t * self);
 
-void menu_finalize(menu_t *self);
+void menu_finalize(menu_t * self);
 
 #endif
