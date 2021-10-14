@@ -6,16 +6,13 @@
 #include <string.h>
 #include <sys/ioctl.h>
 
+#include "./scripture.h"
+
+#define CHAPTER_FORMAT_LEN     5
+#define BOOK_FORMAT_LEN       20
+
 // These also need to be repeaded in the implementation file
 typedef struct menu_t menu_t;
-
-struct bookinfo_t {
-    unsigned short int id;
-    unsigned short int chapters;
-    char *title;
-};
-
-typedef struct bookinfo_t bookinfo_t;
 
 typedef union mitem_t {
     bookinfo_t bookinfo;

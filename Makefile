@@ -7,11 +7,11 @@ bible:
 empty:
 	mkdir -p ./obj
 	cd obj && cc -Wall -ggdb -O0 \
-		-c ../src/menu.c ../src/status.c \
+		-c ../src/menu.c ../src/status.c ../src/scripture.c \
 		$$(ncursesw5-config --cflags --libs)
 	
-	cc -Wall -ggdb -O0 \
-		empty.c obj/menu.o obj/status.o \
+	cc -Wall -ggdb -O0 -I../src\
+		empty.c obj/menu.o obj/status.o obj/scripture.o  \
 		-o empty \
 		$$(ncursesw5-config --cflags --libs)
 

@@ -4,6 +4,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 #include <sys/ioctl.h>
 
 // These also need to be repeaded in the implementation file
