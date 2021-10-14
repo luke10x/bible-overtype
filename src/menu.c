@@ -61,6 +61,7 @@ struct menu_t {
     char *search_term;
     unsigned short item_format_len; // Item label (number of multibyte chars + '\0')
     unsigned short selected_index;  // Currently selected item
+    unsigned short is_done;
 
     // dims
     unsigned short visible_columns; // how many columns of items the window can fit
@@ -81,12 +82,19 @@ void menu_filter(menu_t * self, char *search)
     self->filtered_items_count = 0; // Will be increased during this function
     char *item_label = malloc(self->item_format_len * sizeof(char));
     for (int i = 0; i < self->all_items_count; i++) {
+        // printf("f i = %d\r\n", i);
+
+        char chapter_label[20];
 
         // TODO here it is now assuming is a book item,
         // but it also can be chapter item
-        const bookinfo_t book = self->all_items[i].bookinfo;
-        sprintf(item_label, "%2d. %-15s", book.id, book.title);
-
+        if (self->item_size == sizeof(int)) {
+            const int chapter = self->all_items[i].chapter;
+            sprintf((char *) &chapter_label, "%3d", chapter);
+        } else {
+            const bookinfo_t book = self->all_items[i].bookinfo;
+            sprintf(item_label, "%2d. %-15s", book.id, book.title);
+        }
         // TODO separate string utils module
         char *found = strstr(strlwr(item_label),
                              strlwr(search));
@@ -173,23 +181,29 @@ void write_here(menu_t * self, const int row, const int col, int color_pair,
 }
 
 // Perhaps it is already outside of this class business to draw it
-void _draw_one_book(menu_t * self, int y, int x, bookinfo_t book, int key,
+void _draw_one_book(menu_t * self, int y, int x, mitem_t item, int key,
                     struct winsize winsz)
 {
     /* FIXME depends where this code will ter be moved,
      * it may have access to the global constant
      */
-    int BOOK_FORMAT_LEN = self->item_format_len;
+    int fmtlen = self->item_format_len;
 
-    char s[BOOK_FORMAT_LEN];
-    sprintf(s, "%2d. %-15s", book.id, book.title);
+    char s[fmtlen];
+    if (self->item_size == sizeof(int)) {
+        sprintf(s, "%d", item.chapter);
+    } else {
+        bookinfo_t book = item.bookinfo;
+        sprintf(s, "%2d. %-15s", book.id, book.title);
+
+    }
 
     int color_pair = PAIR_BOOK;
     if (key == self->selected_index) {
         color_pair = PAIR_BOOK_SELECTED;
     }
 
-    write_here(self, y, x * BOOK_FORMAT_LEN, color_pair, s, winsz);
+    write_here(self, y, x * fmtlen, color_pair, s, winsz);
 
 
     // Uncomment this later TODO (need to think how to pass along the search term)
@@ -204,7 +218,7 @@ void _draw_one_book(menu_t * self, int y, int x, bookinfo_t book, int key,
         color_pair_search = PAIR_SEARCH_SELECTED;
     }
 
-    write_here(self, y, x * BOOK_FORMAT_LEN + pos, color_pair_search,
+    write_here(self, y, x * fmtlen + pos, color_pair_search,
                highlighted, winsz);
 
 }
@@ -233,8 +247,8 @@ void menu_render(menu_t * self, struct winsize winsz)
                 break;
 
             // Again book specific...
-            const bookinfo_t book = self->filtered_items[i].bookinfo;
-            _draw_one_book(self, y, x, book, i, winsz);
+            const mitem_t item = self->filtered_items[i];
+            _draw_one_book(self, y, x, item, i, winsz);
 
             i++;
         }
@@ -247,13 +261,13 @@ void menu_fast_render(menu_t * self, int old_selected_index,
     int y = self->selected_index % self->height;
     int x = (int) (self->selected_index / self->height) - self->delta;
     _draw_one_book(self, y, x,
-                   self->filtered_items[self->selected_index].bookinfo,
+                   self->filtered_items[self->selected_index],
                    self->selected_index, winsz);
 
     y = old_selected_index % self->height;
     x = (int) (old_selected_index / self->height) - self->delta;
     _draw_one_book(self, y, x,
-                   self->filtered_items[old_selected_index].bookinfo,
+                   self->filtered_items[old_selected_index],
                    old_selected_index, winsz);
 }
 
@@ -287,6 +301,10 @@ void menu_handle_key(menu_t * self, char ch)
     }
 }
 
+mitem_t *menu_get_selected_item(menu_t * self) {
+    return &self->filtered_items[self->selected_index];
+}
+
 unsigned short menu_get_selected_index(menu_t * self)
 {
     return self->selected_index;
@@ -302,6 +320,14 @@ unsigned short menu_get_filtered_item_count(menu_t * self)
     return self->filtered_items_count;
 }
 
+unsigned short menu_is_done(menu_t *self) {
+    return self->is_done;
+}
+
+void menu_finalize(menu_t *self) {
+    self->is_done = 1;
+}
+
 menu_t *menu_create(const mitem_t * all_items,
                     unsigned short all_items_count,
                     size_t item_size, unsigned short item_format_len)
@@ -312,8 +338,9 @@ menu_t *menu_create(const mitem_t * all_items,
     self->all_items = all_items;
     self->all_items_count = all_items_count;
 
-    self->filtered_items = malloc(all_items_count * item_size);
+    self->filtered_items = malloc(all_items_count * sizeof(mitem_t));
     self->selected_index = 0;
+    self->is_done = 0;
 
     menu_filter(self, "");
 

@@ -31,6 +31,8 @@ status_t *status_create()
 void status_set_msg(status_t * self, char *msg)
 {
     self->msg = msg;
+    self->search_len = 0;
+    self->search_term[0] = 0;
 }
 
 void status_render(status_t * self, struct winsize winsz)

@@ -14,6 +14,9 @@
 #endif
 
 #define NUMBER_OF_BOOKS       66
+#define BOOK_FORMAT_LEN       20
+#define MAX_CHAPTER          150
+#define CHAPTER_FORMAT_LEN     5
 
 bookinfo_t all_books[NUMBER_OF_BOOKS] = {
     {.id = 1,.title = "Genesis",.chapters = 50 },
@@ -84,6 +87,24 @@ bookinfo_t all_books[NUMBER_OF_BOOKS] = {
     {.id = 66,.title = "Revelation",.chapters = 22 },
 };
 
+int all_chapters[MAX_CHAPTER] = {
+    1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+    11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+    21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
+    31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
+    41, 42, 43, 44, 45, 46, 47, 48, 49, 50,
+    51, 52, 53, 54, 55, 56, 57, 58, 59, 60,
+    61, 62, 63, 64, 65, 66, 67, 68, 69, 70,
+    71, 72, 73, 74, 75, 76, 77, 78, 79, 80,
+    81, 82, 83, 84, 85, 86, 87, 88, 89, 90,
+    91, 92, 93, 94, 95, 96, 97, 98, 99, 100,
+    101, 102, 103, 104, 105, 106, 107, 108, 109, 110,
+    111, 112, 113, 114, 115, 116, 117, 118, 119, 120,
+    121, 122, 123, 124, 125, 126, 127, 128, 129, 130,
+    131, 132, 133, 134, 135, 136, 137, 138, 139, 140,
+    141, 142, 143, 144, 145, 146, 147, 148, 149, 150
+};
+
 unsigned short old_selected_index;
 
 static void init_colors()
@@ -123,6 +144,7 @@ int resized = 0;
 
 status_t *statusbar;
 menu_t *book_menu;
+menu_t *chapter_menu;
 
 void get_winsize()
 {
@@ -140,6 +162,59 @@ void get_winsize()
 #endif
 }
 
+static void loop_to_select_chapter()
+{
+
+    char ch = getch();
+    if (ch == -1 && !resized)
+        return;
+    if (ch == 255 && !resized)
+        return;                 // For my Little Endian machine mainly
+    if (ch == 27) {
+        curs_set(1);
+        endwin();
+#ifdef EMSCRIPTEN
+        emscripten_cancel_main_loop();
+#endif
+        exit(0);
+    }
+    if (ch == 10) {
+        menu_finalize(chapter_menu);
+        // curs_set(1);
+        // endwin();
+#ifdef EMSCRIPTEN
+        emscripten_cancel_main_loop();
+#endif
+        return;
+    }
+
+
+    get_winsize();
+
+    old_selected_index = menu_get_selected_index(chapter_menu);
+    // int old_delta = menu_get_delta(book_menu);
+
+    menu_handle_key(chapter_menu, ch);
+    if (status_handle_key(statusbar, ch, chapter_menu)) {
+        resized = 1;
+    }
+
+    char *search_term = status_get_search_term(statusbar);
+
+    menu_filter(chapter_menu, search_term);
+    menu_recalculate_dims(chapter_menu, winsz);
+
+    if (resized) {
+        resized = 0;
+        clear();
+
+        menu_render(chapter_menu, winsz);
+    } else {
+        menu_fast_render(chapter_menu, old_selected_index, winsz);
+    }
+    status_render(statusbar, winsz);
+    
+}
 static void loop_to_select_book()
 {
     char ch = getch();
@@ -150,6 +225,15 @@ static void loop_to_select_book()
     if (ch == 27) {
         curs_set(1);
         endwin();
+#ifdef EMSCRIPTEN
+        emscripten_cancel_main_loop();
+#endif
+        exit(0);
+    }
+    if (ch == 10) {
+        menu_finalize(book_menu);
+        // curs_set(1);
+        // endwin();
 #ifdef EMSCRIPTEN
         emscripten_cancel_main_loop();
 #endif
@@ -190,15 +274,45 @@ int main(int argc, char *argv[])
     char msg[20] = "Enter book:";
     status_set_msg(statusbar, (char *) &msg);
     book_menu = menu_create((mitem_t *) & all_books, NUMBER_OF_BOOKS,
-                            sizeof(bookinfo_t), 20);
+                            sizeof(bookinfo_t), BOOK_FORMAT_LEN);
     get_winsize();
     menu_recalculate_dims(book_menu, winsz);
     resized = 1;
 #ifdef EMSCRIPTEN
     emscripten_set_main_loop(loop_to_select_book, 1000 / 50, FALSE);
 #else
-    for (;; loop_to_select_book())
+    do {
+        loop_to_select_book();
         napms(50);
+        
+    } while (!menu_is_done(book_menu));
 #endif
+
+    resized = 1;    
+    
+    bookinfo_t selected_book = menu_get_selected_item(book_menu)->bookinfo;
+
+    char *m = malloc(30) ;
+    sprintf(m, "%s selected, now choose a chapter:", selected_book.title);
+    status_set_msg(statusbar, m);
+    status_render(statusbar, winsz);
+
+    mitem_t *inflated_chapters = malloc(MAX_CHAPTER * sizeof(mitem_t));
+
+    for (int i = 0; i < selected_book.chapters; i++) inflated_chapters[i].chapter = all_chapters[i];
+    chapter_menu = menu_create(inflated_chapters, selected_book.chapters,
+                            sizeof(int), CHAPTER_FORMAT_LEN);
+
+#ifdef EMSCRIPTEN
+    emscripten_set_main_loop(loop_to_select_chapter, 1000 / 50, FALSE);
+#else
+    do {
+        loop_to_select_chapter();
+        napms(50);
+    } while (!menu_is_done(chapter_menu));
+#endif
+
+
+
     return 9;
 }
