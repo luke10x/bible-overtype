@@ -185,7 +185,13 @@ static void loop_to_select_chapter()
 #ifdef EMSCRIPTEN
         emscripten_cancel_main_loop();
 #endif
-        return;
+        endwin();
+
+        bookinfo_t book = menu_get_selected_item(book_menu)->bookinfo;
+        int chapter = menu_get_selected_item(chapter_menu)->chapter;
+
+        printf("You selected Book of %s chapter %d.\r\n", book.title, chapter); 
+        exit(0);
     }
 
 
@@ -215,6 +221,7 @@ static void loop_to_select_chapter()
     status_render(statusbar, winsz);
     
 }
+
 static void loop_to_select_book()
 {
     char ch = getch();
@@ -236,6 +243,29 @@ static void loop_to_select_book()
         // endwin();
 #ifdef EMSCRIPTEN
         emscripten_cancel_main_loop();
+#endif
+        resized = 1;    
+        
+        bookinfo_t selected_book = menu_get_selected_item(book_menu)->bookinfo;
+
+        char *m = malloc(30) ;
+        sprintf(m, "%s selected, now choose a chapter:", selected_book.title);
+        status_set_msg(statusbar, m);
+        status_render(statusbar, winsz);
+
+        mitem_t *inflated_chapters = malloc(MAX_CHAPTER * sizeof(mitem_t));
+
+        for (int i = 0; i < selected_book.chapters; i++) inflated_chapters[i].chapter = all_chapters[i];
+        chapter_menu = menu_create(inflated_chapters, selected_book.chapters,
+                                sizeof(int), CHAPTER_FORMAT_LEN);
+
+#ifdef EMSCRIPTEN
+        emscripten_set_main_loop(loop_to_select_chapter, 1000 / 50, FALSE);
+#else
+        for (;;) {
+            loop_to_select_chapter();
+            napms(50);
+        } 
 #endif
         return;
     }
@@ -281,36 +311,35 @@ int main(int argc, char *argv[])
 #ifdef EMSCRIPTEN
     emscripten_set_main_loop(loop_to_select_book, 1000 / 50, FALSE);
 #else
-    do {
+    for (;;) {
         loop_to_select_book();
-        napms(50);
-        
-    } while (!menu_is_done(book_menu));
+        napms(50);   
+    }    
 #endif
 
-    resized = 1;    
+//     resized = 1;    
     
-    bookinfo_t selected_book = menu_get_selected_item(book_menu)->bookinfo;
+//     bookinfo_t selected_book = menu_get_selected_item(book_menu)->bookinfo;
 
-    char *m = malloc(30) ;
-    sprintf(m, "%s selected, now choose a chapter:", selected_book.title);
-    status_set_msg(statusbar, m);
-    status_render(statusbar, winsz);
+//     char *m = malloc(30) ;
+//     sprintf(m, "%s selected, now choose a chapter:", selected_book.title);
+//     status_set_msg(statusbar, m);
+//     status_render(statusbar, winsz);
 
-    mitem_t *inflated_chapters = malloc(MAX_CHAPTER * sizeof(mitem_t));
+//     mitem_t *inflated_chapters = malloc(MAX_CHAPTER * sizeof(mitem_t));
 
-    for (int i = 0; i < selected_book.chapters; i++) inflated_chapters[i].chapter = all_chapters[i];
-    chapter_menu = menu_create(inflated_chapters, selected_book.chapters,
-                            sizeof(int), CHAPTER_FORMAT_LEN);
+//     for (int i = 0; i < selected_book.chapters; i++) inflated_chapters[i].chapter = all_chapters[i];
+//     chapter_menu = menu_create(inflated_chapters, selected_book.chapters,
+//                             sizeof(int), CHAPTER_FORMAT_LEN);
 
-#ifdef EMSCRIPTEN
-    emscripten_set_main_loop(loop_to_select_chapter, 1000 / 50, FALSE);
-#else
-    do {
-        loop_to_select_chapter();
-        napms(50);
-    } while (!menu_is_done(chapter_menu));
-#endif
+// #ifdef EMSCRIPTEN
+//     emscripten_set_main_loop(loop_to_select_chapter, 1000 / 50, FALSE);
+// #else
+//     do {
+//         loop_to_select_chapter();
+//         napms(50);
+//     } while (!menu_is_done(chapter_menu));
+// #endif
 
 
 
