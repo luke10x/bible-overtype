@@ -2,12 +2,14 @@
 #include <stdlib.h>
 #include <time.h>
 #include <locale.h>
+#include <string.h>
 #include <sys/ioctl.h>
 
 #include "./src/menu.h"
 #include "./src/status.h"
 #include "./src/common.h"
 #include "./src/scripture.h"
+#include "./src/charlie.h"
 
 #ifdef EMSCRIPTEN
 #include <emscripten.h>
@@ -107,6 +109,13 @@ static void loop_to_select_chapter()
         for (int i = 0; i < blob_size; i++) {
             printf("%c", blob[i]);
         }
+
+        char *utf8_line = "Tėve mūsų, kuris esi danguje!";
+        char *ascii_line = fold2ascii(utf8_line);
+
+        printf("🐤\r\nWAS: %s[%lu]\r\nNOW: %s[%lu]\r\n",
+            utf8_line, strlen(utf8_line), ascii_line, strlen(ascii_line)
+        );
 
         exit(0);
     }
