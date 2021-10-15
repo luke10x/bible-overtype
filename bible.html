@@ -10,10 +10,15 @@ body,p,a,td,li {
 .lh15 {
 	line-height: 15px;
 }
+body {
+	/* background: rgb(24, 24, 24); */
+	background: #111;
+
+}
 
 .term {
 	font-family: "Courier New",courier,fixed,monospace;
-	font-size: 16px;
+	font-size: 18px;
 	color: #94aad6;
 	background: none;
 	letter-spacing: 1px;
@@ -93,11 +98,25 @@ tt,pre {
 	}
 }
 
+.centered {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	/* border: 5px solid #FFFF00; */
+	padding: 10px;
+	/* border: 1px solid red; */
+	height: 466px;
+	width: 935px;
+	
+}
 </style>
 </head>
-<body bgcolor="#262" link="#77dd11" text="#cccccc" alink="#eeeeee" vlink="#77dd11"
+<body  link="#77dd11" text="#cccccc" alink="#eeeeee" vlink="#77dd11"
 topmargin="0" bottommargin="0" leftmargin="0" rightmargin="0" marginheight="0" marginwidth="0">
+<div class="centered">		
 <div id="termDiv" style="position:absolute; visibility: hidden; z-index:1;"/>
+</div>
 <script language="JavaScript" type="text/javascript" src="bible.js"></script>
 </body>
 </html>

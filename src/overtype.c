@@ -27,6 +27,7 @@
 typedef struct overtype_t overtype_t;
 
 struct overtype_t {
+    bool autotext_started;
 
 };
 ///// Unrefactored ///////////////
@@ -479,8 +480,8 @@ void print_previous_lines(int number_of_lines)
 
 int this_is_lnumber_start(const char *line, int typed)
 {
-    const uint32_t expected_ch = simplify(line, typed);
-    if (expected_ch >= 0x0030 && expected_ch <= 0x0039) {
+    const char expected_ch = simplify(line, typed);
+    if (expected_ch >= '0' && expected_ch < '9') {
         return true;
     }
     return false;
@@ -501,14 +502,19 @@ int this_is_subsequent_space(const char *line, int typed)
 bool should_autotext(int now_started, const char *line, int typed,
                      struct charstack *undostack)
 {
+
+    // printf("\r\n\r\n sould aT? \r\n");
     if (undostack != 0) {
         return false;
     }
     if (now_started) {
+
         const uint32_t expected_ch = simplify(line, typed);
-        if (expected_ch == 0x0020 ||
-            expected_ch == 0x003A ||
-            (expected_ch >= 0x0030 && expected_ch <= 0x0039)
+    // printf("\r\n\r\n sould aT? \r\n");
+
+        if (expected_ch == ' ' ||
+            expected_ch == ':' ||
+            (expected_ch >= '0' && expected_ch <= '9')
             ) {
             return true;
         }
@@ -858,7 +864,9 @@ int _is_same(char expected, char pressed)
     if (pressed == 10 && expected == 0) {
         true;
     }
-    int result = expected == pressed;
+    char *ascii_expected = fold2ascii(&expected);
+    char *ascii_pressed = fold2ascii(&pressed);
+    int result = ascii_expected[0] == ascii_pressed[0];
     if (!result) {
     }
     // printf("\r\n     [%c %d == %c %d] \r\n", expected, expected, pressed,
@@ -877,32 +885,34 @@ overtype_t *ovt_create(uint8_t * blob)
     undostack_size = 0;
     undostack = NULL;
 
-    bool autotext_started = false;
+    self->autotext_started = 0;
     return self;
+}
+
+
+char *ovt_try_autotext(overtype_t *self, char ch) {
+    char expected_ch = broken_lines[line][column];
+
+    // printf("\r\n%c\r\n",expected_ch);
+
+    self->autotext_started = should_autotext(self->autotext_started, broken_lines[line], column,
+                    undostack);
+
+    if (self->autotext_started) {
+        return expected_ch;
+    }
+
+    return ch;
 }
 
 int ovt_handle_key(overtype_t * self, char ch)
 {
-
-
     uint32_t expected_ch;
     size_t len;
     char str[MAX_LEN];
 
 
-    // if (undostack_size) {
-    //   endwin(); printf("why is this here%d" , undostack_size); exit(1);
-    // }
     expected_ch = broken_lines[line][column];
-
-    // printf("\r\n%c\r\n",expected_ch);
-
-    // autotext_started = 0;
-    // should_autotext(autotext_started, broken_lines[line], column,
-    //                 undostack);
-
-    // char ch = autotext_started ? expected : getxchar_();
-
     len = char_len(broken_lines[line]);
 
     if (ch == 10) {

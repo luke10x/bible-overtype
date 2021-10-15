@@ -31,7 +31,10 @@ overtype_t *overtype;
 
 static void loop_to_do_overtype()
 {
-    char ch = getch();
+
+        // curs_set(1);
+
+    char ch = ovt_try_autotext(overtype, getch());
     if (ch == -1 || ch == 255) {
         if (!resized) {
             resized = 0;
@@ -108,6 +111,7 @@ static void loop_to_select_chapter()
 
         ovt_render(overtype, winsz);
 
+        curs_set(1);
         // exit(0);
 
 #ifdef EMSCRIPTEN
