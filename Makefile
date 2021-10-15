@@ -1,10 +1,4 @@
-overtype:
-	cc -Wall -ggdb -O0 -o overtype overtype.c -lm -lutf8proc -lunistring $$(ncursesw5-config --cflags --libs)
-
 bible:
-	cc -Wall -ggdb -O0 -o bible bible.c $$(ncursesw5-config --cflags --libs)
-
-empty:
 	mkdir -p ./obj
 	cd obj && cc -Wall -ggdb -O0 \
 		-c ../src/menu.c ../src/status.c ../src/scripture.c \
@@ -15,9 +9,9 @@ empty:
 	cc -Wall -ggdb -O0 -c src/scripture.c -o obj/scripture.o
 	cc -Wall -ggdb -O0 -c src/charlie.c   -o obj/charlie.o
 		
-	cc -Wall -ggdb -O0 -I../src empty.c \
+	cc -Wall -ggdb -O0 -I../src src/bible.c \
 		obj/menu.o obj/status.o obj/scripture.o obj/charlie.o \
-		-o empty \
+		-o bible \
 		$$(ncursesw5-config --cflags --libs) -lutf8proc 
 
 clean:

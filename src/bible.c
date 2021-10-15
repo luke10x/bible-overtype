@@ -5,11 +5,11 @@
 #include <string.h>
 #include <sys/ioctl.h>
 
-#include "./src/menu.h"
-#include "./src/status.h"
-#include "./src/common.h"
-#include "./src/scripture.h"
-#include "./src/charlie.h"
+#include "./menu.h"
+#include "./status.h"
+#include "./common.h"
+#include "./scripture.h"
+#include "./charlie.h"
 
 #ifdef EMSCRIPTEN
 #include <emscripten.h>
@@ -95,8 +95,7 @@ static void loop_to_select_chapter()
         endwin();               // End of story starts here.
 
         bookinfo_t book = menu_get_selected_item(book_menu)->bookinfo;
-        int chapter = menu_get_selected_item(chapter_menu)->chapter;
-        // ^ make it proper type TODO    
+        chapter_t chapter = menu_get_selected_item(chapter_menu)->chapter;
 
         uint8_t *blob;
         size_t blob_size;
