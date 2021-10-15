@@ -31,16 +31,15 @@ overtype_t *overtype;
 
 static void loop_to_do_overtype()
 {
-
-        // curs_set(1);
-
+        curs_set(1);
     char ch = ovt_try_autotext(overtype, getch());
     if (ch == -1 || ch == 255) {
-        if (!resized) {
+        if (resized) {
             resized = 0;
             clear();
             ovt_render(overtype, winsz);
         }
+
         return;
     }
 
@@ -55,10 +54,13 @@ static void loop_to_do_overtype()
     // resized = 0;
 
     // check_winsize(); // TODO check if it can go before the getch
+        curs_set(0);
 
     if (ovt_handle_key(overtype, ch)) {
         resized = 1;            // Whenever the new line is addded and we need to refres all screen
     }
+        curs_set(1);
+
 }
 
 

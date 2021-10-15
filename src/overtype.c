@@ -412,6 +412,7 @@ void soft_refresh()
 void write_here_str(int color_pair, char *str)
 {
     wattron(pad, COLOR_PAIR(color_pair));
+
     waddstr(pad, str);
     wattroff(pad, COLOR_PAIR(color_pair));
 
@@ -911,7 +912,6 @@ int ovt_handle_key(overtype_t * self, char ch)
     size_t len;
     char str[MAX_LEN];
 
-
     expected_ch = broken_lines[line][column];
     len = char_len(broken_lines[line]);
 
@@ -976,6 +976,7 @@ int ovt_handle_key(overtype_t * self, char ch)
             }
         }
     }
+
     int should_re_render = 0;
     return should_re_render;
 }
