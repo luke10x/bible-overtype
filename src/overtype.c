@@ -11,16 +11,18 @@
 #include <wchar.h>
 #include <math.h>
 
-#include <unitypes.h>
-#include <uniconv.h>
-#include <unistdio.h>
-#include <unistr.h>
-#include <uniwidth.h>
+// #include <unitypes.h>
+// #include <uniconv.h>
+// #include <unistdio.h>
+// #include <unistr.h>
+// #include <uniwidth.h>
 #include <utf8proc.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdint.h>
 #include <stdlib.h>
+
+#include "charlie.h"
 
 typedef struct overtype_t overtype_t;
 
@@ -74,7 +76,7 @@ int original_lines_total;
 
 int broken_lines_total;
 
-struct winsize winsz;
+extern struct winsize winsz;
 
 int cursor = 0;                 // Curent character in the file
 // 32;
@@ -164,14 +166,16 @@ uint8_t normalize(const uint32_t c)
 
 size_t char_len(const char *input)
 {
-    size_t len = 0;
-    ucs4_t _;
+    char * ascii = fold2ascii(input);
+    return strlen(input);
+    // size_t len = 0;
+    // ucs4_t _;
 
-    for (uint8_t * it = (uint8_t *) input; it; it = (uint8_t *) u8_next(&_, it)) {
-        len++;
-    }
-    len--;
-    return len;
+    // for (uint8_t * it = (uint8_t *) input; it; it = (uint8_t *) u8_next(&_, it)) {
+    //     len++;
+    // }
+    // len--;
+    // return len;
 }
 
 const uint32_t simplify(const char *input, const int index)
@@ -181,9 +185,11 @@ const uint32_t simplify(const char *input, const int index)
         return 0;
     }
 
-    const uint32_t *mbcs = u32_strconv_from_locale(input);
-    const uint32_t unicode = (int) *(&mbcs[index]);
-    return unicode;
+    return (uint32_t)input[index];
+
+    // const uint32_t *mbcs = u32_strconv_from_locale(input);
+    // const uint32_t unicode = (int) *(&mbcs[index]);
+    // return unicode;
 }
 
 void get_winsize()
@@ -367,21 +373,21 @@ struct xchar getxchar_()
 
 int is_same(uint32_t expected, struct xchar pressed)
 {
-    if (expected == 10 && expected == 0) {
-        if (pressed.type == XCH_SPECIAL && pressed.ch == XCH_KEY_NEWLINE) {
-            return TRUE;
-        }
-        return FALSE;
-    }
-    if (pressed.type == XCH_CHAR) {
+    // if (expected == 10 && expected == 0) {
+    //     if (pressed.type == XCH_SPECIAL && pressed.ch == XCH_KEY_NEWLINE) {
+    //         return TRUE;
+    //     }
+    //     return FALSE;
+    // }
+    // if (pressed.type == XCH_CHAR) {
 
-        uint8_t n_expected = normalize(expected);
-        uint8_t n_pressed = normalize(simplify(pressed.str, 0));
+    //     uint8_t n_expected = normalize(expected);
+    //     uint8_t n_pressed = normalize(simplify(pressed.str, 0));
 
-        if (n_expected == n_pressed) {
-            return TRUE;
-        }
-    }
+    //     if (n_expected == n_pressed) {
+    //         return TRUE;
+    //     }
+    // }
 
     return FALSE;
 }
@@ -446,24 +452,27 @@ void print_previous_lines(int number_of_lines)
 
     wmove(pad, line, column + undostack_size);
 
+    // TODO figure out what it is for and rewrite without u8_next
     char *input = broken_lines[line];
-    char *output = malloc(101);
-    size_t len = 0;
-    ucs4_t _;
+    // char *output = malloc(101);
+    // size_t len = 0;
+    // // ucs4_t _;
 
-    for (uint8_t * it = (uint8_t *) input; it; it = (uint8_t *) u8_next(&_, it)) {
-        len++;
-        if (len > column + undostack_size) {
-            sprintf(output, "%s", it);
-            break;
-        }
-    }
+    // for (uint8_t * it = (uint8_t *) input; it; it = (uint8_t *) u8_next(&_, it)) {
+    //     len++;
+    //     if (len > column + undostack_size) {
+    //         sprintf(output, "%s", it);
+    //         break;
+    //     }
+    // }
+
+    // printf("seg: '%s'=input, %d!!!\r\n", input, column + undostack_size);
+
+    char *output = skip_n_unicode_chars_or_to_eol(column + undostack_size, input);
 
     print_grey(line, column + undostack_size, output);
     wmove(pad, line, column + undostack_size);
-    // char s[30];
-    // sprintf(&s, "\r\nUndozs:%d", undostack_size);
-    // print_grey(10, 0, );
+    
 
     soft_refresh();
 }
@@ -514,21 +523,6 @@ bool should_autotext(int now_started, const char *line, int typed,
     return false;
 }
 
-uint8_t *skip_n_unicode_chars_or_to_eol(int n, const char *source)
-{
-    size_t len = 0;
-    ucs4_t _;
-
-    for (uint8_t * it = (uint8_t *) source; it;
-         it = (uint8_t *) u8_next(&_, it)) {
-        if (len == n) {
-            return it;
-        }
-        len++;
-    }
-    return NULL;
-}
-
 int get_padding(int longest_line, int term_cols)
 {
     return (term_cols - longest_line) / 2;
@@ -536,10 +530,12 @@ int get_padding(int longest_line, int term_cols)
 
 int break_lines(const int width)
 {
+
     int j = 0;
 
     int longest_line = 0;
     for (int i = 0; i < original_lines_total; i++) {
+
         int this_len = char_len(original_lines[i]);
         if (this_len > longest_line) {
             longest_line = this_len;
@@ -557,6 +553,7 @@ int break_lines(const int width)
 
         while (start <= last) {
 
+    // printf("lastmentai +%d; len= %d; bytes=%d w=%d\r\n" , i, this_len, bytes_length, width);
             char *finish =
                 (char *) skip_n_unicode_chars_or_to_eol(width, start);
 
@@ -582,6 +579,7 @@ int break_lines(const int width)
 
     margin = get_padding(longest_line, width);
     broken_lines_total = j;
+
     return j;
 }
 

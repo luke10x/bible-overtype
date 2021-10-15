@@ -13,3 +13,35 @@ char *fold2ascii(char *str)
 
     return (char *) output;
 }
+
+int *is_mb_char_head(const ch) {
+    int seventh = (ch >> 7) & 1;
+    int sixth = (ch >> 6) & 1;
+
+    return (seventh && sixth);
+}
+
+int *is_mb_char_tail(const ch) {
+    int seventh = (ch >> 7) & 1;
+    int sixth = (ch >> 6) & 1;
+
+    return (seventh && sixth);
+}
+
+uint8_t *skip_n_unicode_chars_or_to_eol(int n, const char *source)
+{
+
+    char *p = *source;
+    size_t len = 0;
+
+    for (char *p = source; p; p++) {
+      
+        if (len == n) {
+            return p;
+        }
+          if (!is_mb_char_tail((char)p[0])) {
+            len++;
+        }
+    }
+    return NULL;
+}

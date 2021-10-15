@@ -37,7 +37,8 @@ bible.js: libutf8proc.bc.o
 	emcc -I../emcurses src/scripture.c -c -o obj/scripture.bc.o
 	emcc -I../emcurses -I../utf8proc \
 	                   src/charlie.c   -c -o obj/charlie.bc.o
-	emcc -I../emcurses src/overtype.c  -c -o obj/overtype.bc.o
+	emcc -I../emcurses -I../utf8proc \
+									   src/overtype.c -c -o obj/overtype.bc.o
 		
 	emcc -s ALLOW_MEMORY_GROWTH=1 \
 	  -I../emcurses -I../utf8proc src/bible.c \
