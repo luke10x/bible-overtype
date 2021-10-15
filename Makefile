@@ -13,6 +13,7 @@ bible:
 	cc -Wall -ggdb -O0 -I../src src/bible.c \
 		obj/menu.o obj/status.o obj/scripture.o obj/charlie.o obj/overtype.o \
 		-o bible \
+		-lm -lutf8proc -lunistring \
 		$$(ncursesw5-config --cflags --libs) -lutf8proc 
 
 clean:

@@ -28,6 +28,41 @@ menu_t *book_menu;
 menu_t *chapter_menu;
 overtype_t *overtype;
 
+
+static void loop_to_do_overtype()
+{
+    char ch = getch();
+    if (ch == -1 && !resized)
+        return;
+    if (ch == 255 && !resized)
+        return;                 // For my Little Endian machine mainly
+    if (ch == 27) {
+        curs_set(1);
+        endwin();
+#ifdef EMSCRIPTEN
+        emscripten_cancel_main_loop();
+#endif
+        exit(0);
+    }
+
+    check_winsize(); // TODO check if it can go before the getch
+
+    if (ovt_handle_key(overtype, ch)) {
+        resized = 1; // Whenever the new line is addded and we need to refres all screen
+    }
+
+    if (resized) {
+        // ovt_resize(overtype, winsz);
+        resized = 0;
+        clear();
+
+        ovt_render(overtype, winsz);
+    } else {
+        // ovt_fast_render(overtype);
+    }
+}
+
+
 static void loop_to_select_chapter()
 {
     char ch = getch();
@@ -48,7 +83,7 @@ static void loop_to_select_chapter()
 #ifdef EMSCRIPTEN
         emscripten_cancel_main_loop();
 #endif
-        endwin();               // End of story starts here.
+        // endwin();               // End of story starts here.
 
         bookinfo_t book = menu_get_selected_item(book_menu)->bookinfo;
         chapter_t chapter = menu_get_selected_item(chapter_menu)->chapter;
@@ -72,9 +107,19 @@ static void loop_to_select_chapter()
             utf8_line, strlen(utf8_line), ascii_line, strlen(ascii_line)
         );
 
-        overtype = ovt_create(blob);
+        overtype = ovt_create(blob); // Now control is passed to the overtype
+        resized = 1;
+        // exit(0);
 
-        exit(0);
+#ifdef EMSCRIPTEN
+        emscripten_set_main_loop(loop_to_do_overtype, 1000 / 50, FALSE);
+#else
+        for (;;) {
+            loop_to_do_overtype();
+            napms(50);
+        }
+#endif
+        return;
     }
 
     check_winsize();
