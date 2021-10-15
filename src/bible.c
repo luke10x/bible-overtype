@@ -32,10 +32,15 @@ overtype_t *overtype;
 static void loop_to_do_overtype()
 {
     char ch = getch();
-    if (ch == -1 && !resized)
+    if (ch == -1 || ch == 255) {
+        if (!resized) {
+            resized = 0;
+            clear();
+            ovt_render(overtype, winsz);
+        }
         return;
-    if (ch == 255 && !resized)
-        return;                 // For my Little Endian machine mainly
+    }
+
     if (ch == 27) {
         curs_set(1);
         endwin();
@@ -44,21 +49,12 @@ static void loop_to_do_overtype()
 #endif
         exit(0);
     }
+    // resized = 0;
 
-    check_winsize(); // TODO check if it can go before the getch
+    // check_winsize(); // TODO check if it can go before the getch
 
     if (ovt_handle_key(overtype, ch)) {
-        resized = 1; // Whenever the new line is addded and we need to refres all screen
-    }
-
-    if (resized) {
-        // ovt_resize(overtype, winsz);
-        resized = 0;
-        clear();
-
-        ovt_render(overtype, winsz);
-    } else {
-        // ovt_fast_render(overtype);
+        resized = 1;            // Whenever the new line is addded and we need to refres all screen
     }
 }
 
@@ -91,8 +87,8 @@ static void loop_to_select_chapter()
         uint8_t *blob;
         size_t blob_size;
 
-        blob_size = get_chapter_blob(&blob, book.title, chapter); 
-        
+        blob_size = get_chapter_blob(&blob, book.title, chapter);
+
         printf("Chapter of size %ld selected.\r\n", blob_size);
 
         // blob_size = 10;
@@ -104,11 +100,14 @@ static void loop_to_select_chapter()
         char *ascii_line = fold2ascii(utf8_line);
 
         printf("🐤\r\nWAS: %s[%lu]\r\nNOW: %s[%lu]\r\n",
-            utf8_line, strlen(utf8_line), ascii_line, strlen(ascii_line)
-        );
+               utf8_line, strlen(utf8_line), ascii_line, strlen(ascii_line)
+            );
 
-        overtype = ovt_create(blob); // Now control is passed to the overtype
+        overtype = ovt_create(blob);    // Now control is passed to the overtype
         resized = 1;
+
+        ovt_render(overtype, winsz);
+
         // exit(0);
 
 #ifdef EMSCRIPTEN

@@ -20,7 +20,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdint.h>
-#include <stdlib.h> 
+#include <stdlib.h>
 
 typedef struct overtype_t overtype_t;
 
@@ -66,7 +66,7 @@ FILE *logger;
 WINDOW *pad;
 
 // char original_lines[MAX_LINES][MAX_LEN];
-char ** original_lines  = NULL;
+char **original_lines = NULL;
 
 char broken_lines[MAX_LINES][MAX_LEN];
 
@@ -430,17 +430,20 @@ void print_previous_lines(int number_of_lines)
 
     wmove(pad, line, column);
 
-    struct charstack *undostack_copy;
-    undostack_copy = undostack;
-    int mistake_index = -1;
-    while (undostack) {
-        mistake_index++;
-        struct charstack *temp;
-        temp = undostack;
-        undostack = undostack->next;
-        print_bad(line, column + mistake_index, temp->ch.str);
+    if (undostack) {
+        struct charstack *undostack_copy;
+        undostack_copy = undostack;
+        int mistake_index = -1;
+        while (undostack) {
+            mistake_index++;
+            struct charstack *temp;
+            temp = undostack;
+            undostack = undostack->next;
+            print_bad(line, column + mistake_index, temp->ch.str);
+        }
+        undostack = undostack_copy;
     }
-    undostack = undostack_copy;
+
     wmove(pad, line, column + undostack_size);
 
     char *input = broken_lines[line];
@@ -458,6 +461,9 @@ void print_previous_lines(int number_of_lines)
 
     print_grey(line, column + undostack_size, output);
     wmove(pad, line, column + undostack_size);
+    // char s[30];
+    // sprintf(&s, "\r\nUndozs:%d", undostack_size);
+    // print_grey(10, 0, );
 
     soft_refresh();
 }
@@ -824,44 +830,152 @@ int it_was_called_main_before(void)
     exit(0);
 }
 
-void _load_blob(uint8_t *blob) {
+void _load_blob(uint8_t * blob)
+{
 
     // char buffer[MAX_LEN];
     int count = 0;
-char *pch;
+    char *pch;
 
 
     // char *data = (char *)blob
-    pch = strtok ((char *)blob,"\n");
-    while (pch != NULL)
-    {
-        original_lines = (char*)realloc(original_lines, sizeof(char*)*(count+1));
-        original_lines[count] = (char*)malloc(strlen(pch)+1);
+    pch = strtok((char *) blob, "\n");
+    while (pch != NULL) {
+        original_lines =
+            (char *) realloc(original_lines, sizeof(char *) * (count + 1));
+        original_lines[count] = (char *) malloc(strlen(pch) + 1);
         strcpy(original_lines[count], pch);
         count++;
-        pch = strtok (NULL, "\n");
+        pch = strtok(NULL, "\n");
     }
 
     original_lines_total = count;
 }
+
 /////////// clean api ///////////////
-overtype_t *ovt_create(uint8_t *blob) {
-  overtype_t *self = malloc(sizeof(overtype_t));
-
-  _load_blob(blob);
-  _init_colors();
 
 
-  return self;
+int _is_same(char expected, char pressed)
+{
+    if (pressed == 10 && expected == 0) {
+        true;
+    }
+    int result = expected == pressed;
+    if (!result) {
+    }
+    // printf("\r\n     [%c %d == %c %d] \r\n", expected, expected, pressed,
+    // pressed);
+    return result;
 }
 
-int ovt_handle_key(overtype_t *self, char ch) {
 
-  int should_re_render = 1;
-  return should_re_render;
+overtype_t *ovt_create(uint8_t * blob)
+{
+    overtype_t *self = malloc(sizeof(overtype_t));
+
+    _load_blob(blob);
+    _init_colors();
+
+    undostack_size = 0;
+    undostack = NULL;
+
+    bool autotext_started = false;
+    return self;
 }
 
-void ovt_recalculate_size(overtype_t *self, struct winsize winsz) {
+int ovt_handle_key(overtype_t * self, char ch)
+{
+
+
+    uint32_t expected_ch;
+    size_t len;
+    char str[MAX_LEN];
+
+
+    // if (undostack_size) {
+    //   endwin(); printf("why is this here%d" , undostack_size); exit(1);
+    // }
+    expected_ch = broken_lines[line][column];
+
+    // printf("\r\n%c\r\n",expected_ch);
+
+    // autotext_started = 0;
+    // should_autotext(autotext_started, broken_lines[line], column,
+    //                 undostack);
+
+    // char ch = autotext_started ? expected : getxchar_();
+
+    len = char_len(broken_lines[line]);
+
+    if (ch == 10) {
+
+        if (column == len && undostack == 0) {
+
+            line++;
+            column = 0;
+            print_grey(line, column, broken_lines[line]);
+            wmove(pad, line, 0);
+
+            recalculate_offset();
+            soft_refresh();
+        }
+    } else if ((ch == 8 || ch == 7)) {
+        if (undostack) {
+
+            int last_char_pos = column + undostack_size - 1;
+
+            // Pop from undo stack
+            // struct charstack *temp;
+            // temp = undostack;
+            undostack = undostack->next;
+            undostack_size--;
+
+            uint32_t correct_ch = broken_lines[line][last_char_pos];
+            if (correct_ch == 0) {
+                correct_ch = 32;
+            }
+            char str[MAX_LEN] = { 0, 0, 0, 0, 0 };
+            sprintf(str, "%lc", correct_ch);
+
+            print_grey(line, last_char_pos, str);
+
+            wmove(pad, line, last_char_pos);
+
+            soft_refresh();
+        }
+
+    } else {
+        char *ch_as_str = malloc(2);
+        ch_as_str[0] = ch;
+        ch_as_str[1] = 0;
+
+        if (_is_same(expected_ch, ch) && undostack == NULL) {
+            write_here_str(GOOD_PAIR, &expected_ch);
+            cursor++;
+            column++;
+        } else {
+
+            if (margin + column + undostack_size < winsz.ws_col - 1) {
+
+
+                struct charstack *nptr = malloc(sizeof(struct charstack));
+                // nptr->ch = ch;
+                nptr->next = undostack;
+                undostack = nptr;
+                undostack_size++;
+
+                write_here_str(ERROR_PAIR, ch_as_str);
+            }
+        }
+    }
+    int should_re_render = 0;
+    return should_re_render;
 }
 
-void ovt_render(overtype_t *self, struct winsize winsz) {}
+void ovt_recalculate_size(overtype_t * self, struct winsize winsz)
+{
+} void ovt_render(overtype_t * self, struct winsize winsz)
+{
+    fit_in_available_screen();
+
+}

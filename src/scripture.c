@@ -104,7 +104,8 @@ const chapter_t *get_this_many_chapters(uint8_t how_many)
     return p;
 }
 
-const size_t get_chapter_blob(uint8_t **blob, char *book_title, chapter_t chapter)
+const size_t get_chapter_blob(uint8_t ** blob, char *book_title,
+                              chapter_t chapter)
 {
     printf("You selected Book of %s chapter %d.\r\n", book_title, chapter);
     int absolute_number = 0;
@@ -114,8 +115,7 @@ const size_t get_chapter_blob(uint8_t **blob, char *book_title, chapter_t chapte
         absolute_number += all_books[i].chapters;
     }
     absolute_number += chapter;
-    printf("Which is total %dth chapter in whole Bible.\r\n",
-            absolute_number);
+    printf("Which is total %dth chapter in whole Bible.\r\n", absolute_number);
 
     FILE *fp = fopen("usr/share/bible/chapter-index-kjv.bin", "r");
     printf("survived here:\r\n");

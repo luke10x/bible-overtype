@@ -22,7 +22,7 @@ clean:
 		obj/* *~ src/*~
 
 indent:
-	indent -kr -ts4 -nut -l80 -br *.c src/*.c
+	indent -kr -ts4 -nut -l80 -br src/*.c
 
 debian:
 	apt install libncursesw5-dev libunistring-dev libutf8proc-dev
