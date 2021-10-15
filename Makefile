@@ -8,9 +8,10 @@ bible:
 	cc -Wall -ggdb -O0 -c src/status.c    -o obj/status.o
 	cc -Wall -ggdb -O0 -c src/scripture.c -o obj/scripture.o
 	cc -Wall -ggdb -O0 -c src/charlie.c   -o obj/charlie.o
+	cc -Wall -ggdb -O0 -c src/overtype.c  -o obj/overtype.o
 		
 	cc -Wall -ggdb -O0 -I../src src/bible.c \
-		obj/menu.o obj/status.o obj/scripture.o obj/charlie.o \
+		obj/menu.o obj/status.o obj/scripture.o obj/charlie.o obj/overtype.o \
 		-o bible \
 		$$(ncursesw5-config --cflags --libs) -lutf8proc 
 
@@ -35,10 +36,11 @@ bible.js: libutf8proc.bc.o
 	emcc -I../emcurses src/scripture.c -c -o obj/scripture.bc.o
 	emcc -I../emcurses -I../utf8proc \
 	                   src/charlie.c   -c -o obj/charlie.bc.o
+	emcc -I../emcurses src/overtype.c  -c -o obj/overtype.bc.o
 		
 	emcc -s ALLOW_MEMORY_GROWTH=1 \
-	  -I../emcurses -I../utf8proc empty.c \
-		obj/menu.bc.o obj/status.bc.o obj/scripture.bc.o obj/charlie.bc.o \
+	  -I../emcurses -I../utf8proc src/bible.c \
+		obj/menu.bc.o obj/status.bc.o obj/scripture.bc.o obj/charlie.bc.o obj/overtype.bc.o \
 		  obj/libutf8proc.bc.o \
 		  ../emcurses/emscripten/libpdcurses.so \
 		-o bible.js \

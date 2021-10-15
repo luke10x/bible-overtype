@@ -10,6 +10,7 @@
 #include "./common.h"
 #include "./scripture.h"
 #include "./charlie.h"
+#include "./overtype.h"
 
 #ifdef EMSCRIPTEN
 #include <emscripten.h>
@@ -115,6 +116,8 @@ static void loop_to_select_chapter()
         printf("🐤\r\nWAS: %s[%lu]\r\nNOW: %s[%lu]\r\n",
             utf8_line, strlen(utf8_line), ascii_line, strlen(ascii_line)
         );
+
+        overtype_t *overtype = ovt_create(blob);
 
         exit(0);
     }
