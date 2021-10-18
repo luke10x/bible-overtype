@@ -179,7 +179,7 @@ size_t char_len(const char *input)
     // return len;
 }
 
-const uint32_t simplify(const char *input, const int index)
+const uint32_t copy_mb_char(const char *input, const int index)
 {
     size_t len = char_len(input);
     if (index >= len) {
@@ -267,7 +267,7 @@ struct xchar getxchar()
                     getch();    // FIXME more reliable way to clean it perhaps???
 
                     char *str = combine_bytes(pending_curr, pending_char);
-                    ch = normalize(simplify(str, 0));
+                    ch = normalize(copy_mb_char(str, 0));
 
                     return (struct xchar) {
                         .type = XCH_CHAR,
@@ -383,7 +383,7 @@ int is_same(uint32_t expected, struct xchar pressed)
     // if (pressed.type == XCH_CHAR) {
 
     //     uint8_t n_expected = normalize(expected);
-    //     uint8_t n_pressed = normalize(simplify(pressed.str, 0));
+    //     uint8_t n_pressed = normalize(copy_mb_char(pressed.str, 0));
 
     //     if (n_expected == n_pressed) {
     //         return TRUE;
@@ -481,7 +481,7 @@ void print_previous_lines(int number_of_lines)
 
 int this_is_lnumber_start(const char *line, int typed)
 {
-    const char expected_ch = simplify(line, typed);
+    const char expected_ch = copy_mb_char(line, typed);
     if (expected_ch >= '0' && expected_ch < '9') {
         return true;
     }
@@ -492,8 +492,8 @@ int this_is_subsequent_space(const char *line, int typed)
 {
     if (typed == 0)
         return false;
-    const uint32_t previous_ch = simplify(line, typed - 1);
-    const uint32_t expected_ch = simplify(line, typed);
+    const uint32_t previous_ch = copy_mb_char(line, typed - 1);
+    const uint32_t expected_ch = copy_mb_char(line, typed);
     if (previous_ch == 0x0020 && expected_ch == 0x0020) {
         return true;
     }
@@ -510,7 +510,7 @@ bool should_autotext(int now_started, const char *line, int typed,
     }
     if (now_started) {
 
-        const uint32_t expected_ch = simplify(line, typed);
+        const uint32_t expected_ch = copy_mb_char(line, typed);
     // printf("\r\n\r\n sould aT? \r\n");
 
         if (expected_ch == ' ' ||
@@ -638,7 +638,7 @@ void overtype_current_line()
         size_t len;
         char str[MAX_LEN];
 
-        expected_ch = simplify(broken_lines[line], column);
+        expected_ch = copy_mb_char(broken_lines[line], column);
         sprintf(str, "%lc", expected_ch);
 
         autotext_started =
@@ -706,7 +706,7 @@ void overtype_current_line()
                 undostack_size--;
 
                 uint32_t correct_ch =
-                    simplify(broken_lines[line], last_char_pos);
+                    copy_mb_char(broken_lines[line], last_char_pos);
                 if (correct_ch == 0) {
                     correct_ch = 32;
                 }
@@ -983,8 +983,9 @@ int ovt_handle_key(overtype_t * self, char ch)
 
 void ovt_recalculate_size(overtype_t * self, struct winsize winsz)
 {
-} void ovt_render(overtype_t * self, struct winsize winsz)
+} 
+
+void ovt_render(overtype_t * self, struct winsize winsz)
 {
     fit_in_available_screen();
-
 }

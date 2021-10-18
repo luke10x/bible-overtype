@@ -51,10 +51,7 @@ static void loop_to_do_overtype()
 #endif
         exit(0);
     }
-    // resized = 0;
-
-    // check_winsize(); // TODO check if it can go before the getch
-        curs_set(0);
+    curs_set(0);
 
     if (ovt_handle_key(overtype, ch)) {
         resized = 1;            // Whenever the new line is addded and we need to refres all screen
