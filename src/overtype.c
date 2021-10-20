@@ -538,14 +538,9 @@ int get_padding(int longest_line, int term_cols)
 
 int break_blob(int screen_width) {
 
-    // screen_width = 80;
-    // original_lines_total = 10;
-
-    
     int j = 0;
 
     int longest_line = 0;
-    endwin();
 
     for (int i = 0; i < original_lines_total; i++) {
         int this_len = char_len(original_lines[i]);
@@ -565,75 +560,6 @@ int break_blob(int screen_width) {
 
     margin = get_padding(longest_line, screen_width);
     broken_lines_total = j;
-
-
-printf("j=%d\r\n", j);
-for (int i = 0; i < broken_lines_total; i++) {
-// printf("bl[%d]=%d\r\n", i, strlen(broken_lines[i]));
-printf("bl[%d]=%s\r\n", i, broken_lines[i]);
-// 1:1 In the beginning God created the hea!
-// aven and the earth.
-// 1:2 And the earth was without form, and 1
-//  void; and darkness was upon
-// the face of the deep. And the Spirit of 1
-//  God moved upon the face of the
-}
-    exit(1);
-}
-
-int break_lines(const int width)
-{
-
-    int j = 0;
-
-    int longest_line = 0;
-    for (int i = 0; i < original_lines_total; i++) {
-
-        int this_len = char_len(original_lines[i]);
-        if (this_len > longest_line) {
-            longest_line = this_len;
-        }
-        char *start = original_lines[i];
-
-        int bytes_length = strlen(start);
-
-        if (bytes_length == 0) {
-            broken_lines[j][0] = 0;
-            j++;
-        }
-
-        char *last = &(start[bytes_length - 1]);
-
-        while (start <= last) {
-
-    // printf("lastmentai +%d; len= %d; bytes=%d w=%d\r\n" , i, this_len, bytes_length, width);
-            char *finish =
-                (char *) skip_n_unicode_chars_or_to_eol(width, start);
-
-            if (finish == NULL) {
-                finish = last + 1;
-            }
-
-            strncpy(broken_lines[j], start, finish - start);
-            for (int z = 0; z < MAX_LEN; z++)
-                broken_lines[j][z] = 0;
-            strncpy(broken_lines[j], start, finish - start);
-            broken_lines[j][finish - start] = 0;
-
-            j++;
-
-            if (finish == NULL) {
-                start = (char *) skip_n_unicode_chars_or_to_eol(1, finish);
-            } else {
-                start = finish;
-            }
-        }
-    }
-
-    margin = get_padding(longest_line, width);
-    broken_lines_total = j;
-
-    return j;
 }
 
 void fit_in_available_screen(struct winsize winsz)
