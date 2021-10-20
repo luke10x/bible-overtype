@@ -71,7 +71,8 @@ WINDOW *pad;
 // char original_lines[MAX_LINES][MAX_LEN];
 char **original_lines = NULL;
 
-char broken_lines[MAX_LINES][MAX_LEN];
+// char broken_lines[MAX_LINES][MAX_LEN];
+char **broken_lines = NULL;
 
 int original_lines_total;
 
@@ -535,6 +536,51 @@ int get_padding(int longest_line, int term_cols)
     return (term_cols - longest_line) / 2;
 }
 
+int break_blob(int screen_width) {
+
+    // screen_width = 80;
+    // original_lines_total = 10;
+
+    
+    int j = 0;
+
+    int longest_line = 0;
+    endwin();
+
+    for (int i = 0; i < original_lines_total; i++) {
+        int this_len = char_len(original_lines[i]);
+        if (this_len > longest_line) {
+            longest_line = this_len;
+        }
+
+        linebreaker_t *linebreaker = lnbr_create(original_lines[i], screen_width);
+        while (true) {
+            char *piece = lnbr_take_some(linebreaker);
+            if (piece == NULL) break;
+            broken_lines = (char *) realloc(broken_lines, sizeof(char *) * (j + 1));
+            broken_lines[j] = piece;
+            j++;
+        }
+    }
+
+    margin = get_padding(longest_line, screen_width);
+    broken_lines_total = j;
+
+
+printf("j=%d\r\n", j);
+for (int i = 0; i < broken_lines_total; i++) {
+// printf("bl[%d]=%d\r\n", i, strlen(broken_lines[i]));
+printf("bl[%d]=%s\r\n", i, broken_lines[i]);
+// 1:1 In the beginning God created the hea!
+// aven and the earth.
+// 1:2 And the earth was without form, and 1
+//  void; and darkness was upon
+// the face of the deep. And the Spirit of 1
+//  God moved upon the face of the
+}
+    exit(1);
+}
+
 int break_lines(const int width)
 {
 
@@ -590,9 +636,10 @@ int break_lines(const int width)
     return j;
 }
 
-void fit_in_available_screen()
+void fit_in_available_screen(struct winsize winsz)
 {
-    int broken_lines_total = break_lines(winsz.ws_col - 1);
+    // int broken_lines_total = break_lines(winsz.ws_col - 1);
+    int broken_lines_total = break_blob(winsz.ws_col - 1);
 
     clear();
 
@@ -676,7 +723,7 @@ void overtype_current_line()
                 exit(0);
                 break;
             case XCH_KEY_RESIZE:
-                fit_in_available_screen();
+                fit_in_available_screen(winsz);
 
                 continue;
             case XCH_KEY_NEWLINE:
@@ -987,5 +1034,5 @@ void ovt_recalculate_size(overtype_t * self, struct winsize winsz)
 
 void ovt_render(overtype_t * self, struct winsize winsz)
 {
-    fit_in_available_screen();
+    fit_in_available_screen(winsz);
 }
