@@ -884,22 +884,21 @@ int it_was_called_main_before(void)
 
 void _load_blob(uint8_t * blob)
 {
-
-    // char buffer[MAX_LEN];
     int count = 0;
     char *pch;
+    char *data;
+    char *tofree;
 
+    tofree = data = strdup(blob);
 
-    // char *data = (char *)blob
-    pch = strtok((char *) blob, "\n");
-    while (pch != NULL) {
+    while ((pch = strsep(&data, "\n")) != NULL) {
         original_lines =
             (char *) realloc(original_lines, sizeof(char *) * (count + 1));
         original_lines[count] = (char *) malloc(strlen(pch) + 1);
         strcpy(original_lines[count], pch);
         count++;
-        pch = strtok(NULL, "\n");
     }
+    free(tofree);
 
     original_lines_total = count;
 }
