@@ -837,8 +837,20 @@ int _is_same(char expected, char pressed)
     if (pressed == 10 && expected == 0) {
         true;
     }
-    char *ascii_expected = fold2ascii(&expected);
-    char *ascii_pressed = fold2ascii(&pressed);
+
+    char *str_expected = malloc(2); 
+    str_expected[0] = expected;
+    str_expected[1] = 0;
+
+    char *str_pressed = malloc(2); 
+    str_pressed[0] = pressed;
+    str_pressed[1] = 0;
+
+    char *ascii_expected = fold2ascii(str_expected);
+    char *ascii_pressed = fold2ascii(str_pressed);
+
+    // endwin(); printf("p %c %c %s %s>\r\n", pressed, expected, ascii_pressed, ascii_expected); exit(1);
+
     int result = ascii_expected[0] == ascii_pressed[0];
     if (!result) {
     }
@@ -880,7 +892,7 @@ char *ovt_try_autotext(overtype_t *self, char ch) {
 
 int ovt_handle_key(overtype_t * self, char ch)
 {
-    uint32_t expected_ch;
+    char expected_ch;
     size_t len;
     char str[MAX_LEN];
 
