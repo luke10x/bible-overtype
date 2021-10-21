@@ -31,9 +31,9 @@ overtype_t *overtype;
 
 static void loop_to_do_overtype()
 {
-        curs_set(1);
+    curs_set(1);
     char ch = ovt_try_autotext(overtype, getch());
-    // char ch =  getch();
+
     if (ch == -1 || ch == 255) {
         if (resized) {
             resized = 0;
@@ -57,7 +57,7 @@ static void loop_to_do_overtype()
     if (ovt_handle_key(overtype, ch)) {
         resized = 1;            // Whenever the new line is addded and we need to refres all screen
     }
-        curs_set(1);
+    curs_set(1);
 
 }
 

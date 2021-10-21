@@ -16,14 +16,16 @@ char *fold2ascii(char *str)
     return (char *) output;
 }
 
-char is_mb_char_head(char ch) {
+char is_mb_char_head(char ch)
+{
     int seventh = (ch >> 7) & 1;
     int sixth = (ch >> 6) & 1;
 
     return (seventh && sixth);
 }
 
-char is_mb_char_tail(char ch) {
+char is_mb_char_tail(char ch)
+{
     int seventh = (ch >> 7) & 1;
     int sixth = (ch >> 6) & 1;
 
@@ -35,11 +37,11 @@ char *skip_n_unicode_chars_or_to_eol(int n, char *source)
     size_t len = 0;
 
     for (char *p = source; p; p++) {
-      
+
         if (len == n) {
             return p;
         }
-          if (!is_mb_char_tail((char)p[0])) {
+        if (!is_mb_char_tail((char) p[0])) {
             len++;
         }
     }
@@ -53,7 +55,8 @@ typedef struct linebreaker_t {
     bool done;
 } linebreaker_t;
 
-linebreaker_t *lnbr_create(char *long_line, int max_width) {
+linebreaker_t *lnbr_create(char *long_line, int max_width)
+{
     linebreaker_t *self = malloc(sizeof(linebreaker_t));
 
     self->max_width = max_width;
@@ -64,7 +67,8 @@ linebreaker_t *lnbr_create(char *long_line, int max_width) {
     return self;
 }
 
-char *lnbr_take_some(linebreaker_t *self) {
+char *lnbr_take_some(linebreaker_t * self)
+{
 
     if (self->p == NULL) {
         return NULL;
@@ -86,11 +90,12 @@ char *lnbr_take_some(linebreaker_t *self) {
         if (!is_mb_char_tail(ch)) {
             count++;
         }
-        if (count  == self->max_width) {
+        if (count == self->max_width) {
             self->p++;
 
             if (is_mb_char_head(ch)) {
-                while (is_mb_char_tail((char) self->p[1])) self->p++;
+                while (is_mb_char_tail((char) self->p[1]))
+                    self->p++;
             }
             break;
         }

@@ -168,7 +168,7 @@ uint8_t normalize(const uint32_t c)
 
 size_t char_len(const char *input)
 {
-    char * ascii = fold2ascii((char *) input);
+    char *ascii = fold2ascii((char *) input);
     return strlen(ascii);
 }
 
@@ -179,7 +179,7 @@ const uint32_t copy_mb_char(const char *input, const int index)
         return 0;
     }
 
-    return (uint32_t)input[index];
+    return (uint32_t) input[index];
 
     // const uint32_t *mbcs = u32_strconv_from_locale(input);
     // const uint32_t unicode = (int) *(&mbcs[index]);
@@ -463,11 +463,12 @@ void print_previous_lines(int number_of_lines)
 
     // printf("seg: '%s'=input, %d!!!\r\n", input, column + undostack_size);
 
-    char *output = (char *) skip_n_unicode_chars_or_to_eol(column + undostack_size, input);
+    char *output =
+        (char *) skip_n_unicode_chars_or_to_eol(column + undostack_size, input);
 
     print_grey(line, column + undostack_size, output);
     wmove(pad, line, column + undostack_size);
-    
+
 
     soft_refresh();
 }
@@ -504,11 +505,10 @@ bool should_autotext(int now_started, const char *line, int typed,
     if (now_started) {
 
         const uint32_t expected_ch = copy_mb_char(line, typed);
-    // printf("\r\n\r\n sould aT? \r\n");
+        // printf("\r\n\r\n sould aT? \r\n");
 
         if (expected_ch == ' ' ||
-            expected_ch == ':' ||
-            (expected_ch >= '0' && expected_ch <= '9')
+            expected_ch == ':' || (expected_ch >= '0' && expected_ch <= '9')
             ) {
             return true;
         }
@@ -528,7 +528,8 @@ int get_padding(int longest_line, int term_cols)
     return (term_cols - longest_line) / 2;
 }
 
-void break_blob(int screen_width) {
+void break_blob(int screen_width)
+{
 
     int j = 0;
 
@@ -540,11 +541,14 @@ void break_blob(int screen_width) {
             longest_line = this_len;
         }
 
-        linebreaker_t *linebreaker = lnbr_create(original_lines[i], screen_width);
+        linebreaker_t *linebreaker =
+            lnbr_create(original_lines[i], screen_width);
         while (true) {
             char *piece = lnbr_take_some(linebreaker);
-            if (piece == NULL) break;
-            broken_lines = (char **) realloc(broken_lines, sizeof(char *) * (j + 1));
+            if (piece == NULL)
+                break;
+            broken_lines =
+                (char **) realloc(broken_lines, sizeof(char *) * (j + 1));
             broken_lines[j] = piece;
             j++;
         }
@@ -830,11 +834,11 @@ int _is_same(char expected, char pressed)
         true;
     }
 
-    char *str_expected = malloc(2); 
+    char *str_expected = malloc(2);
     str_expected[0] = expected;
     str_expected[1] = 0;
 
-    char *str_pressed = malloc(2); 
+    char *str_pressed = malloc(2);
     str_pressed[0] = pressed;
     str_pressed[1] = 0;
 
@@ -867,13 +871,15 @@ overtype_t *ovt_create(uint8_t * blob)
 }
 
 
-char ovt_try_autotext(overtype_t *self, char ch) {
+char ovt_try_autotext(overtype_t * self, char ch)
+{
     char expected_ch = broken_lines[line][column];
 
     // printf("\r\n%c\r\n",expected_ch);
 
-    self->autotext_started = should_autotext(self->autotext_started, broken_lines[line], column,
-                    undostack);
+    self->autotext_started =
+        should_autotext(self->autotext_started, broken_lines[line], column,
+                        undostack);
 
     if (self->autotext_started) {
         return expected_ch;
@@ -958,7 +964,7 @@ int ovt_handle_key(overtype_t * self, char ch)
 
 void ovt_recalculate_size(overtype_t * self, struct winsize winsz)
 {
-} 
+}
 
 void ovt_render(overtype_t * self, struct winsize winsz)
 {
