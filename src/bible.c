@@ -46,16 +46,16 @@ static void loop_to_do_overtype()
 
 
 
-    if (ch == -1 || ch == 255 || ch == 6) {
+    if (ch == -1 || ch == 255 || ch == 6 || ch == -102) {
 
         if (resized) {
 
-            if (eye) {
-                endwin();
-                printf("LOOPED aT ch=%d %dx%d\r\n", winsz.ws_row, winsz.ws_col, ch);
-                exit(3);
-            }
-            eye = 1;
+            // if (eye) {
+            //     endwin();
+            //     printf("LOOPED aT ch=%d %dx%d\r\n", ch, winsz.ws_row, winsz.ws_col);
+            //     exit(3);
+            // }
+            // eye = 1;
 
             check_winsize();
             ovt_recalculate_size(overtype, winsz);
