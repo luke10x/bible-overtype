@@ -10,6 +10,8 @@ void check_winsize()
     struct winsize new_winsz;
     ioctl(0, TIOCGWINSZ, &new_winsz);
 
+    // printf("new size %dx%d\r\n", new_winsz.ws_row, new_winsz.ws_col);
+
     if (new_winsz.ws_col != winsz.ws_col || new_winsz.ws_row != winsz.ws_row) {
         winsz = new_winsz;
         resized = 1;

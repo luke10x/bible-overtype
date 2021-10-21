@@ -4,6 +4,8 @@
 #include <locale.h>
 #include <string.h>
 #include <sys/ioctl.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 #include "./menu.h"
 #include "./status.h"
@@ -29,13 +31,35 @@ menu_t *chapter_menu;
 overtype_t *overtype;
 
 
+int eye = 0;
+
 static void loop_to_do_overtype()
 {
     curs_set(1);
-    char ch = ovt_try_autotext(overtype, getch());
 
-    if (ch == -1 || ch == 255) {
+    
+
+    char ch = ovt_try_autotext(overtype, getch());
+    check_winsize();
+    // ovt_recalculate_size(overtype, winsz);
+
+
+
+
+    if (ch == -1 || ch == 255 || ch == 6) {
+
         if (resized) {
+
+            if (eye) {
+                endwin();
+                printf("LOOPED aT ch=%d %dx%d\r\n", winsz.ws_row, winsz.ws_col, ch);
+                exit(3);
+            }
+            eye = 1;
+
+            check_winsize();
+            ovt_recalculate_size(overtype, winsz);
+
             resized = 0;
             clear();
             ovt_render(overtype, winsz);
@@ -53,6 +77,8 @@ static void loop_to_do_overtype()
         exit(0);
     }
     curs_set(0);
+
+    // check_winsize()
 
     if (ovt_handle_key(overtype, ch)) {
         resized = 1;            // Whenever the new line is addded and we need to refres all screen
@@ -107,20 +133,25 @@ static void loop_to_select_chapter()
             );
 
         overtype = ovt_create(blob);    // Now control is passed to the overtype
+        ovt_recalculate_size(overtype, winsz);
         resized = 1;
-
-        ovt_render(overtype, winsz);
-
+        
         curs_set(1);
-        // exit(0);
 
 #ifdef EMSCRIPTEN
         emscripten_set_main_loop(loop_to_do_overtype, 1000 / 50, FALSE);
 #else
+
+        int flags = fcntl(STDIN_FILENO, F_GETFL, 0);
+        fcntl(STDIN_FILENO, F_SETFL, flags | O_NONBLOCK);
+
         for (;;) {
             loop_to_do_overtype();
             napms(50);
         }
+
+        fcntl(STDIN_FILENO, F_SETFL, flags);
+
 #endif
         return;
     }

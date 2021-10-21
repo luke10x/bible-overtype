@@ -24,6 +24,8 @@
 
 #include "charlie.h"
 
+
+
 typedef struct overtype_t overtype_t;
 
 struct overtype_t {
@@ -125,19 +127,6 @@ void print_bad(const int row, const int col, const char *line)
     wattroff(pad, COLOR_PAIR(ERROR_PAIR));
 }
 
-static void sig_handler(int sig)
-{
-    signal(SIGWINCH, SIG_IGN);
-    if (SIGWINCH == sig) {
-        // resized = 1;
-        // char ch = getch();
-        // printf("tesize char %d \r\n", ch);
-        // endwin;
-        // exit(1);
-    }
-    signal(SIGWINCH, sig_handler);
-}
-
 char *combine_bytes(int n, uint8_t * bytes)
 {
     char *result = malloc(3);
@@ -184,28 +173,6 @@ const uint32_t copy_mb_char(const char *input, const int index)
     // const uint32_t unicode = (int) *(&mbcs[index]);
     // return unicode;
 }
-
-int is_same(uint32_t expected, struct xchar pressed)
-{
-    // if (expected == 10 && expected == 0) {
-    //     if (pressed.type == XCH_SPECIAL && pressed.ch == XCH_KEY_NEWLINE) {
-    //         return TRUE;
-    //     }
-    //     return FALSE;
-    // }
-    // if (pressed.type == XCH_CHAR) {
-
-    //     uint8_t n_expected = normalize(expected);
-    //     uint8_t n_pressed = normalize(copy_mb_char(pressed.str, 0));
-
-    //     if (n_expected == n_pressed) {
-    //         return TRUE;
-    //     }
-    // }
-
-    return FALSE;
-}
-
 
 void recalculate_offset()
 {
@@ -380,38 +347,6 @@ void break_blob(int screen_width)
 
 void fit_in_available_screen(struct winsize winsz)
 {
-    break_blob(winsz.ws_col - 1);
-// endwin(); printf("winzs %d, %d\r\n", winsz.ws_row, winsz.ws_col); exit(1);
-
-    clear();
-
-    pad = newpad(broken_lines_total, winsz.ws_col - margin);
-    recalculate_offset();
-    soft_refresh();
-
-    wmove(pad, line, column);
-
-    int chars_in_lines = 0;
-    line = -1;
-    size_t linesize = 0;
-    while (chars_in_lines <= cursor) {
-        line++;
-        linesize = char_len(broken_lines[line]);    // + 1; // because newlines add at least 1
-
-        chars_in_lines += linesize;
-    }
-    int chars_in_previous_lines = chars_in_lines - linesize;
-
-    column = cursor - chars_in_previous_lines;
-    wmove(pad, line, column);
-
-    recalculate_offset();
-    soft_refresh();
-
-    print_previous_lines(line);
-
-    recalculate_offset();
-    soft_refresh();
 }
 
 static void _init_colors()
@@ -583,9 +518,37 @@ int ovt_handle_key(overtype_t * self, char ch)
 
 void ovt_recalculate_size(overtype_t * self, struct winsize winsz)
 {
+    break_blob(winsz.ws_col - 1);
+
+
+    wmove(pad, line, column);
+
+    int chars_in_lines = 0;
+    line = -1;
+    size_t linesize = 0;
+    while (chars_in_lines <= cursor) {
+        line++;
+        linesize = char_len(broken_lines[line]);
+
+        chars_in_lines += linesize;
+    }
+    int chars_in_previous_lines = chars_in_lines - linesize;
+
+    column = cursor - chars_in_previous_lines;
 }
 
 void ovt_render(overtype_t * self, struct winsize winsz)
 {
-    fit_in_available_screen(winsz);
+    pad = newpad(broken_lines_total, winsz.ws_col - margin);
+
+    int last_char_pos = column + undostack_size - 1;
+
+    wmove(pad, line, column);
+    recalculate_offset();
+    soft_refresh();
+
+    print_previous_lines(line);
+
+    recalculate_offset();
+    soft_refresh();
 }
