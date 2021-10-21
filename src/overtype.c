@@ -536,7 +536,7 @@ int get_padding(int longest_line, int term_cols)
     return (term_cols - longest_line) / 2;
 }
 
-int break_blob(int screen_width) {
+void break_blob(int screen_width) {
 
     int j = 0;
 
@@ -564,8 +564,8 @@ int break_blob(int screen_width) {
 
 void fit_in_available_screen(struct winsize winsz)
 {
-    // int broken_lines_total = break_lines(winsz.ws_col - 1);
-    int broken_lines_total = break_blob(winsz.ws_col - 1);
+    break_blob(winsz.ws_col - 1);
+// endwin(); printf("winzs %d, %d\r\n", winsz.ws_row, winsz.ws_col); exit(1);
 
     clear();
 
@@ -897,10 +897,9 @@ int ovt_handle_key(overtype_t * self, char ch)
     char str[MAX_LEN];
 
     expected_ch = broken_lines[line][column];
-    len = char_len(broken_lines[line]);
 
     if (ch == 10) {
-
+        len = char_len(broken_lines[line]);
         if (column == len && undostack == 0) {
 
             line++;
@@ -941,8 +940,12 @@ int ovt_handle_key(overtype_t * self, char ch)
         ch_as_str[0] = ch;
         ch_as_str[1] = 0;
 
+        char *expected_ch_as_str = malloc(2);
+        expected_ch_as_str[0] = expected_ch;
+        expected_ch_as_str[1] = 0;
+
         if (_is_same(expected_ch, ch) && undostack == NULL) {
-            write_here_str(GOOD_PAIR, &expected_ch);
+            write_here_str(GOOD_PAIR, expected_ch_as_str);
             cursor++;
             column++;
         } else {

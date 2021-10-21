@@ -33,6 +33,7 @@ static void loop_to_do_overtype()
 {
         curs_set(1);
     char ch = ovt_try_autotext(overtype, getch());
+    // char ch =  getch();
     if (ch == -1 || ch == 255) {
         if (resized) {
             resized = 0;
