@@ -16,24 +16,22 @@ char *fold2ascii(char *str)
     return (char *) output;
 }
 
-int *is_mb_char_head(const ch) {
+char is_mb_char_head(char ch) {
     int seventh = (ch >> 7) & 1;
     int sixth = (ch >> 6) & 1;
 
     return (seventh && sixth);
 }
 
-int *is_mb_char_tail(const ch) {
+char is_mb_char_tail(char ch) {
     int seventh = (ch >> 7) & 1;
     int sixth = (ch >> 6) & 1;
 
     return (seventh && sixth);
 }
 
-uint8_t *skip_n_unicode_chars_or_to_eol(int n, const char *source)
+char *skip_n_unicode_chars_or_to_eol(int n, char *source)
 {
-
-    char *p = *source;
     size_t len = 0;
 
     for (char *p = source; p; p++) {
@@ -50,10 +48,10 @@ uint8_t *skip_n_unicode_chars_or_to_eol(int n, const char *source)
 
 typedef struct linebreaker_t {
     char *long_line;
-    int *max_width;
+    int max_width;
     char *p;
     bool done;
-};
+} linebreaker_t;
 
 linebreaker_t *lnbr_create(char *long_line, int max_width) {
     linebreaker_t *self = malloc(sizeof(linebreaker_t));

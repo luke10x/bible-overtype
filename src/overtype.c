@@ -168,16 +168,8 @@ uint8_t normalize(const uint32_t c)
 
 size_t char_len(const char *input)
 {
-    char * ascii = fold2ascii(input);
-    return strlen(input);
-    // size_t len = 0;
-    // ucs4_t _;
-
-    // for (uint8_t * it = (uint8_t *) input; it; it = (uint8_t *) u8_next(&_, it)) {
-    //     len++;
-    // }
-    // len--;
-    // return len;
+    char * ascii = fold2ascii((char *) input);
+    return strlen(ascii);
 }
 
 const uint32_t copy_mb_char(const char *input, const int index)
@@ -456,7 +448,7 @@ void print_previous_lines(int number_of_lines)
     wmove(pad, line, column + undostack_size);
 
     // TODO figure out what it is for and rewrite without u8_next
-    char *input = broken_lines[line];
+    char *input = (char *) broken_lines[line];
     // char *output = malloc(101);
     // size_t len = 0;
     // // ucs4_t _;
@@ -471,7 +463,7 @@ void print_previous_lines(int number_of_lines)
 
     // printf("seg: '%s'=input, %d!!!\r\n", input, column + undostack_size);
 
-    char *output = skip_n_unicode_chars_or_to_eol(column + undostack_size, input);
+    char *output = (char *) skip_n_unicode_chars_or_to_eol(column + undostack_size, input);
 
     print_grey(line, column + undostack_size, output);
     wmove(pad, line, column + undostack_size);
@@ -552,7 +544,7 @@ void break_blob(int screen_width) {
         while (true) {
             char *piece = lnbr_take_some(linebreaker);
             if (piece == NULL) break;
-            broken_lines = (char *) realloc(broken_lines, sizeof(char *) * (j + 1));
+            broken_lines = (char **) realloc(broken_lines, sizeof(char *) * (j + 1));
             broken_lines[j] = piece;
             j++;
         }
@@ -815,11 +807,11 @@ void _load_blob(uint8_t * blob)
     char *data;
     char *tofree;
 
-    tofree = data = strdup(blob);
+    tofree = data = strdup((const char *) blob);
 
     while ((pch = strsep(&data, "\n")) != NULL) {
         original_lines =
-            (char *) realloc(original_lines, sizeof(char *) * (count + 1));
+            (char **) realloc(original_lines, sizeof(char *) * (count + 1));
         original_lines[count] = (char *) malloc(strlen(pch) + 1);
         strcpy(original_lines[count], pch);
         count++;
@@ -875,7 +867,7 @@ overtype_t *ovt_create(uint8_t * blob)
 }
 
 
-char *ovt_try_autotext(overtype_t *self, char ch) {
+char ovt_try_autotext(overtype_t *self, char ch) {
     char expected_ch = broken_lines[line][column];
 
     // printf("\r\n%c\r\n",expected_ch);
@@ -892,14 +884,10 @@ char *ovt_try_autotext(overtype_t *self, char ch) {
 
 int ovt_handle_key(overtype_t * self, char ch)
 {
-    char expected_ch;
-    size_t len;
-    char str[MAX_LEN];
-
-    expected_ch = broken_lines[line][column];
+    char expected_ch = broken_lines[line][column];
 
     if (ch == 10) {
-        len = char_len(broken_lines[line]);
+        size_t len = char_len(broken_lines[line]);
         if (column == len && undostack == 0) {
 
             line++;
