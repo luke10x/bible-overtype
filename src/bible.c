@@ -76,14 +76,17 @@ static void loop_to_do_overtype()
 #endif
         exit(0);
     }
-    curs_set(0);
+    // curs_set(0);
 
     // check_winsize()
 
     if (ovt_handle_key(overtype, ch)) {
-        resized = 1;            // Whenever the new line is addded and we need to refres all screen
+        // Whenever the new line is addded and we need to refres all screen
+        // That's maybe not exactly true ^^
+        clear();
+        ovt_render(overtype, winsz);
     }
-    curs_set(1);
+    // curs_set(1);
 
 }
 

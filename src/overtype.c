@@ -24,8 +24,6 @@
 
 #include "charlie.h"
 
-
-
 typedef struct overtype_t overtype_t;
 
 struct overtype_t {
@@ -35,9 +33,10 @@ struct overtype_t {
 ///// Unrefactored ///////////////
 
 
-#define GREY_PAIR    15
-#define GOOD_PAIR    16
-#define ERROR_PAIR   17
+#define GREY_PAIR     15
+#define GOOD_PAIR     16
+#define ERROR_PAIR    13
+#define NEW_GREY_PAIR 12
 
 #define XCH_UNKNOWN   0
 #define XCH_BACKSPACE 3
@@ -62,7 +61,7 @@ struct xchar {
 };
 
 struct charstack {
-    struct xchar ch;
+    char *str;
     struct charstack *next;
 };
 
@@ -227,7 +226,7 @@ void print_previous_lines(int number_of_lines)
             struct charstack *temp;
             temp = undostack;
             undostack = undostack->next;
-            print_bad(line, column + mistake_index, temp->ch.str);
+            print_bad(line, column + (undostack_size - mistake_index - 1), temp->str);
         }
         undostack = undostack_copy;
     }
@@ -351,9 +350,12 @@ void fit_in_available_screen(struct winsize winsz)
 
 static void _init_colors()
 {
-    // start_color();
     init_pair(GREY_PAIR, COLOR_WHITE, COLOR_BLACK);
-    init_pair(ERROR_PAIR, COLOR_RED + 8, COLOR_YELLOW + 8);
+#ifdef EMSCRIPTEN
+    init_pair(ERROR_PAIR, COLOR_BLACK, COLOR_BLUE );
+#else
+    init_pair(ERROR_PAIR, COLOR_BLACK, COLOR_RED + 8);
+#endif
     init_pair(GOOD_PAIR, COLOR_GREEN + 8, COLOR_BLACK);
     clear();
 }
@@ -481,6 +483,10 @@ int ovt_handle_key(overtype_t * self, char ch)
             wmove(pad, line, last_char_pos);
 
             soft_refresh();
+
+#ifdef EMSCRIPTEN
+            return 1;
+#endif
         }
 
     } else {
@@ -502,7 +508,13 @@ int ovt_handle_key(overtype_t * self, char ch)
 
 
                 struct charstack *nptr = malloc(sizeof(struct charstack));
-                // nptr->ch = ch;
+
+                char *bad_str = malloc(5);
+                sprintf(bad_str, "%c", ch);
+
+
+                // char *bad_str = "B";
+                nptr->str = bad_str;
                 nptr->next = undostack;
                 undostack = nptr;
                 undostack_size++;
