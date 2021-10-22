@@ -455,10 +455,23 @@ int ovt_handle_key(overtype_t * self, char ch)
             line++;
             column = 0;
             print_grey(line, column, broken_lines[line]);
+
+
+#ifdef EMSCRIPTEN
+            if (strlen(broken_lines[line]) == 0) {
+                print_grey(line, column, " ");
+
+            }
+#endif
             wmove(pad, line, 0);
 
             recalculate_offset();
             soft_refresh();
+#ifdef EMSCRIPTEN
+            if (line > 0 && strlen(broken_lines[line-1]) == 0) {
+                return 1;
+            }
+#endif
         }
     } else if ((ch == 8 || ch == 7)) {
         if (undostack) {
