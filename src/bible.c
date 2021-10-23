@@ -42,7 +42,7 @@ static void loop_to_do_overtype()
 {
     curs_set(1);
 
-    
+
 
     char ch = ovt_try_autotext(overtype, getch());
     check_winsize();
@@ -143,7 +143,7 @@ static void loop_to_select_chapter()
         overtype = ovt_create(blob);    // Now control is passed to the overtype
         ovt_recalculate_size(overtype, winsz);
         resized = 1;
-        
+
         curs_set(1);
 
 #ifdef EMSCRIPTEN
@@ -266,8 +266,8 @@ static void loop_to_select_book()
 }
 
 static struct option const longopts[] = {
-    {"stdin", optional_argument, NULL, 'i'},
-    {NULL, 0, NULL, 0}
+    { "stdin", optional_argument, NULL, 'i' },
+    { NULL, 0, NULL, 0 }
 };
 
 int main(int argc, char *argv[])
@@ -276,8 +276,8 @@ int main(int argc, char *argv[])
 
 
     int selected_opt = getopt_long(argc, argv, "+i:", longopts, NULL);
-    
-    
+
+
     if (selected_opt == -1) {
 
         statusbar = status_create();
@@ -302,8 +302,6 @@ int main(int argc, char *argv[])
 
         // FILE *fp = fopen(stdin, "r");
 
-        int err;
-        size_t f_size;
         FILE *fp = stdin;
         char *blob = get_stream_blob(fp);
 
@@ -312,10 +310,10 @@ int main(int argc, char *argv[])
 // exit(1);
 
         check_winsize();
-        overtype = ovt_create(blob);    // Now control is passed to the overtype
+        overtype = ovt_create((uint8_t *) blob);    // Now control is passed to the overtype
         ovt_recalculate_size(overtype, winsz);
         resized = 1;
-        
+
         curs_set(1);
 
 #ifdef EMSCRIPTEN
@@ -333,7 +331,7 @@ int main(int argc, char *argv[])
         fcntl(STDIN_FILENO, F_SETFL, flags);
 
 #endif
-        return;
+        return 9;
 
         // endwin();
         // printf("dta : %s", f_data);

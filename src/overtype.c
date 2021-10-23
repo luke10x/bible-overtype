@@ -226,7 +226,8 @@ void print_previous_lines(int number_of_lines)
             struct charstack *temp;
             temp = undostack;
             undostack = undostack->next;
-            print_bad(line, column + (undostack_size - mistake_index - 1), temp->str);
+            print_bad(line, column + (undostack_size - mistake_index - 1),
+                      temp->str);
         }
         undostack = undostack_copy;
     }
@@ -352,7 +353,7 @@ static void _init_colors()
 {
     init_pair(GREY_PAIR, COLOR_WHITE, COLOR_BLACK);
 #ifdef EMSCRIPTEN
-    init_pair(ERROR_PAIR, COLOR_BLACK, COLOR_BLUE );
+    init_pair(ERROR_PAIR, COLOR_BLACK, COLOR_BLUE);
 #else
     init_pair(ERROR_PAIR, COLOR_BLACK, COLOR_RED + 8);
 #endif
@@ -468,7 +469,7 @@ int ovt_handle_key(overtype_t * self, char ch)
             recalculate_offset();
             soft_refresh();
 #ifdef EMSCRIPTEN
-            if (line > 0 && strlen(broken_lines[line-1]) == 0) {
+            if (line > 0 && strlen(broken_lines[line - 1]) == 0) {
                 return 1;
             }
 #endif
@@ -565,8 +566,6 @@ void ovt_recalculate_size(overtype_t * self, struct winsize winsz)
 void ovt_render(overtype_t * self, struct winsize winsz)
 {
     pad = newpad(broken_lines_total, winsz.ws_col - margin);
-
-    int last_char_pos = column + undostack_size - 1;
 
     wmove(pad, line, column);
     recalculate_offset();
