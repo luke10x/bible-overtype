@@ -280,6 +280,9 @@ int main(int argc, char *argv[])
 
     if (selected_opt == -1) {
 
+        // In case, some pipe was redirected to stdin of this app
+        freopen("/dev/tty", "rw", stdin);
+
         statusbar = status_create();
         char msg[20] = "Enter book:";
         status_set_msg(statusbar, (char *) &msg);
@@ -304,9 +307,10 @@ int main(int argc, char *argv[])
 
         FILE *fp = stdin;
         char *blob = get_stream_blob(fp);
+        freopen("/dev/tty", "rw", stdin);
 
-        endwin();
-        printf("BLOB %s\r\n", blob);
+//         endwin();
+//         printf("BLOB %s\r\n", blob);
 // exit(1);
 
         check_winsize();
