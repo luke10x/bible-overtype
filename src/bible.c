@@ -6,6 +6,10 @@
 #include <sys/ioctl.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <getopt.h>
+#include <stdio.h>
+
+
 
 #include "./menu.h"
 #include "./status.h"
@@ -13,6 +17,7 @@
 #include "./scripture.h"
 #include "./charlie.h"
 #include "./overtype.h"
+#include "./file.h"
 
 #include "./screen.c"
 
@@ -260,27 +265,86 @@ static void loop_to_select_book()
     status_render(statusbar, winsz);
 }
 
+static struct option const longopts[] = {
+    {"stdin", optional_argument, NULL, 'i'},
+    {NULL, 0, NULL, 0}
+};
+
 int main(int argc, char *argv[])
 {
     init_screen();
 
-    statusbar = status_create();
-    char msg[20] = "Enter book:";
-    status_set_msg(statusbar, (char *) &msg);
 
-    book_menu = menu_create((mitem_t *) get_all_books(), NUMBER_OF_BOOKS,
-                            sizeof(bookinfo_t), BOOK_FORMAT_LEN);
-    check_winsize();
-    menu_recalculate_dims(book_menu, winsz);
-    resized = 1;
+    int selected_opt = getopt_long(argc, argv, "+i:", longopts, NULL);
+    
+    
+    if (selected_opt == -1) {
+
+        statusbar = status_create();
+        char msg[20] = "Enter book:";
+        status_set_msg(statusbar, (char *) &msg);
+
+        book_menu = menu_create((mitem_t *) get_all_books(), NUMBER_OF_BOOKS,
+                                sizeof(bookinfo_t), BOOK_FORMAT_LEN);
+        check_winsize();
+        menu_recalculate_dims(book_menu, winsz);
+        resized = 1;
 #ifdef EMSCRIPTEN
-    emscripten_set_main_loop(loop_to_select_book, 1000 / 50, FALSE);
+        emscripten_set_main_loop(loop_to_select_book, 1000 / 50, FALSE);
 #else
-    for (;;) {
-        loop_to_select_book();
-        napms(50);
-    }
+        for (;;) {
+            loop_to_select_book();
+            napms(50);
+        }
 #endif
+        return 9;
+    } else if (selected_opt == 'i') {
 
-    return 9;
+        // FILE *fp = fopen(stdin, "r");
+
+        int err;
+        size_t f_size;
+        FILE *fp = stdin;
+        char *blob = get_stream_blob(fp);
+
+        // endwin();
+//         printf("BLOB %s\r\n", blob);
+// exit(1);
+
+        check_winsize();
+        overtype = ovt_create(blob);    // Now control is passed to the overtype
+        ovt_recalculate_size(overtype, winsz);
+        resized = 1;
+        
+        curs_set(1);
+
+#ifdef EMSCRIPTEN
+        emscripten_set_main_loop(loop_to_do_overtype, 1000 / 50, FALSE);
+#else
+
+        int flags = fcntl(STDIN_FILENO, F_GETFL, 0);
+        fcntl(STDIN_FILENO, F_SETFL, flags | O_NONBLOCK);
+
+        for (;;) {
+            loop_to_do_overtype();
+            napms(50);
+        }
+
+        fcntl(STDIN_FILENO, F_SETFL, flags);
+
+#endif
+        return;
+
+        // endwin();
+        // printf("dta : %s", f_data);
+        // // free(f_data);
+
+
+
+        // endwin(); printf("load from file \r\n"); exit(0);
+    } else {
+        endwin();
+        fprintf(stderr, "Usage:\r\n\tbible [--stdin]\r\n");
+        exit(1);
+    }
 }
