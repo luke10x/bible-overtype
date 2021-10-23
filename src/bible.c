@@ -305,8 +305,8 @@ int main(int argc, char *argv[])
         FILE *fp = stdin;
         char *blob = get_stream_blob(fp);
 
-        // endwin();
-//         printf("BLOB %s\r\n", blob);
+        endwin();
+        printf("BLOB %s\r\n", blob);
 // exit(1);
 
         check_winsize();
