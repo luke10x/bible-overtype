@@ -199,7 +199,7 @@ Module['FS_createPath']("/usr/share", "bible", true, true);
     }
   
    }
-   loadPackage({"files": [{"filename": "/usr/share/bible/chapter-index-kjv.bin", "start": 0, "end": 9512}, {"filename": "/usr/share/bible/the-king-james-bible.txt", "start": 9512, "end": 4342008}], "remote_package_size": 4342008, "package_uuid": "93f7a08a-a6dd-4064-93ea-288cbff3064f"});
+   loadPackage({"files": [{"filename": "/usr/share/bible/chapter-index-kjv.bin", "start": 0, "end": 9512}, {"filename": "/usr/share/bible/the-king-james-bible.txt", "start": 9512, "end": 4342008}], "remote_package_size": 4342008, "package_uuid": "885f411f-cbb5-48ad-9e49-012c7c434f2a"});
   
   })();
   
@@ -5273,22 +5273,22 @@ var tempI64;
 // === Body ===
 
 var ASM_CONSTS = {
-  328476: function($0, $1) {term.cursorSet($0, $1);},  
- 328504: function($0, $1, $2, $3) {term.setChar($0, $1, $2, $3);},  
- 328538: function() {return term.crsrBlinkMode ? 0 : term.crsrBlockMode ? 1 : 2;},  
- 328602: function() {return term.conf.rows;},  
- 328629: function() {return term.conf.cols;},  
- 328656: function() {return term.inputChar;},  
- 328683: function() {var c = term.inputChar; term.inputChar = 0; return c;},  
- 328741: function() {term.inputChar = 0},  
- 328760: function() {term.close()},  
- 328773: function() {term = new Terminal({ termDiv: 'termDiv', handler: function() {}, x: 0, y: 0, initHandler: function() { term.charMode = true; term.lock = false; term.cursorOn(); } }); term.open();},  
- 328954: function($0, $1) {term.resizeTo($0, $1);},  
- 328981: function($0) {term.handler = function() { Runtime.dynCall('v', $0); }; term.orig_resizeTo = term.orig_resizeTo || term.resizeTo; term.resizeTo = function(x,y) { var r = this.orig_resizeTo(x,y); if (r) Runtime.dynCall('v', $0); return r; };},  
- 329211: function() {throw 'SimulateInfiniteLoop'},  
- 329240: function($0, $1) {term.resizeTo($0, $1);},  
- 329267: function() {term.cursorOn()},  
- 329283: function() {term.cursorOff()}
+  329076: function($0, $1) {term.cursorSet($0, $1);},  
+ 329104: function($0, $1, $2, $3) {term.setChar($0, $1, $2, $3);},  
+ 329138: function() {return term.crsrBlinkMode ? 0 : term.crsrBlockMode ? 1 : 2;},  
+ 329202: function() {return term.conf.rows;},  
+ 329229: function() {return term.conf.cols;},  
+ 329256: function() {return term.inputChar;},  
+ 329283: function() {var c = term.inputChar; term.inputChar = 0; return c;},  
+ 329341: function() {term.inputChar = 0},  
+ 329360: function() {term.close()},  
+ 329373: function() {term = new Terminal({ termDiv: 'termDiv', handler: function() {}, x: 0, y: 0, initHandler: function() { term.charMode = true; term.lock = false; term.cursorOn(); } }); term.open();},  
+ 329554: function($0, $1) {term.resizeTo($0, $1);},  
+ 329581: function($0) {term.handler = function() { Runtime.dynCall('v', $0); }; term.orig_resizeTo = term.orig_resizeTo || term.resizeTo; term.resizeTo = function(x,y) { var r = this.orig_resizeTo(x,y); if (r) Runtime.dynCall('v', $0); return r; };},  
+ 329811: function() {throw 'SimulateInfiniteLoop'},  
+ 329840: function($0, $1) {term.resizeTo($0, $1);},  
+ 329867: function() {term.cursorOn()},  
+ 329883: function() {term.cursorOff()}
 };
 
 
@@ -5366,11 +5366,6 @@ var ASM_CONSTS = {
       return demangleAll(js);
     }
 
-  function setErrNo(value) {
-      HEAP32[((___errno_location())>>2)] = value;
-      return value;
-    }
-  
   var PATH = {splitPath:function(filename) {
         var splitPathRe = /^(\/?|)([\s\S]*?)((?:\.{1,2}|[^\/]+?|)(\.[^.\/]*|))(?:[\/]*)$/;
         return splitPathRe.exec(filename).slice(1);
@@ -7716,6 +7711,33 @@ var ASM_CONSTS = {
         else assert(high === -1);
         return low;
       }};
+  function ___sys_dup2(oldfd, suggestFD) {try {
+  
+      var old = SYSCALLS.getStreamFromFD(oldfd);
+      if (old.fd === suggestFD) return suggestFD;
+      return SYSCALLS.doDup(old.path, old.flags, suggestFD);
+    } catch (e) {
+    if (typeof FS === 'undefined' || !(e instanceof FS.ErrnoError)) abort(e);
+    return -e.errno;
+  }
+  }
+
+  function ___sys_dup3(fd, suggestFD, flags) {try {
+  
+      var old = SYSCALLS.getStreamFromFD(fd);
+      assert(!flags);
+      if (old.fd === suggestFD) return -28;
+      return SYSCALLS.doDup(old.path, old.flags, suggestFD);
+    } catch (e) {
+    if (typeof FS === 'undefined' || !(e instanceof FS.ErrnoError)) abort(e);
+    return -e.errno;
+  }
+  }
+
+  function setErrNo(value) {
+      HEAP32[((___errno_location())>>2)] = value;
+      return value;
+    }
   function ___sys_fcntl64(fd, cmd, varargs) {SYSCALLS.varargs = varargs;
   try {
   
@@ -9126,6 +9148,8 @@ function tryParseAsDataURI(filename) {
 
 
 var asmLibraryArg = {
+  "__sys_dup2": ___sys_dup2,
+  "__sys_dup3": ___sys_dup3,
   "__sys_fcntl64": ___sys_fcntl64,
   "__sys_ioctl": ___sys_ioctl,
   "__sys_open": ___sys_open,

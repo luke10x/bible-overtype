@@ -485,50 +485,6 @@ int ovt_handle_key(overtype_t * self, char ch)
             undostack = undostack->next;
             undostack_size--;
 
-            // for (int  ii = 0; ii < char_len(broken_lines[line]); ii++) {
-            //     wdelch(pad);
-            // }
-
-            // for (int i = 0; i < column; i++) {
-            //     uint32_t correct_ch = broken_lines[line][i];
-            //     char str[MAX_LEN] = { 0, 0, 0, 0, 0 };
-            //     sprintf(str, "%lc", correct_ch);
-            //     print_good(line, i, str);
-            // }
-            // for (int i = column; i < column + undostack_size ; i++) {
-            //     uint32_t error_ch = broken_lines[line][i];
-            //     if (error_ch == 0) {
-            //         error_ch = 32;
-            //     }
-            //     // error_ch = 'X';
-            //     char str[MAX_LEN] = { 0, 0, 0, 0, 0 };
-            //     sprintf(str, "%lc", error_ch);
-            //     print_bad(line, i, str); 
-            // }
-            /////
-            // for (int i = column + undostack_size; i < char_len(broken_lines[line]); i++) {
-            //     uint32_t new_ch = broken_lines[line][i];
-            //     if (new_ch == 0) {
-            //         new_ch = 32;
-            //     }
-            //     char str[MAX_LEN] = { 0, 0, 0, 0, 0 };
-            //     sprintf(str, "%lc", new_ch);
-            //     print_grey(line, i, str); 
-            // }
-//////
-            // uint32_t correct_ch = broken_lines[line][last_char_pos];
-            // if (correct_ch == 0) {
-            //     correct_ch = 32;
-            // }
-            // char str[MAX_LEN] = { 0, 0, 0, 0, 0 };
-            // sprintf(str, "%lc", correct_ch);
-
-            // wdelch(pad);
-            // wdelch(pad);
-
-            // print_grey(line, last_char_pos, str);
-
-
             uint32_t correct_ch = broken_lines[line][last_char_pos];
             if (correct_ch == 0) {
                 correct_ch = 32;
@@ -545,7 +501,8 @@ int ovt_handle_key(overtype_t * self, char ch)
             // so that the cursor is actually moved before writing
             soft_refresh();
 
-            for (int i = column + undostack_size; i < char_len(broken_lines[line]); i++) {
+            for (int i = column + undostack_size;
+                 i < char_len(broken_lines[line]); i++) {
                 uint32_t new_ch = broken_lines[line][i];
                 char str[MAX_LEN] = { 0, 0, 0, 0, 0 };
                 sprintf(str, "%lc", new_ch);
