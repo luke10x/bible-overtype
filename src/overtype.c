@@ -252,7 +252,7 @@ void print_previous_lines(int number_of_lines)
 
 
     for (int i = column + undostack_size;
-        i < winsz.ws_col -margin -1; i++) print_grey(line, i, "_");
+        i < winsz.ws_col -margin -1; i++) print_grey(line, i, " ");
 
     char *output =
         (char *) skip_n_unicode_chars_or_to_eol(column + undostack_size, input);
@@ -456,19 +456,16 @@ int ovt_handle_key(overtype_t * self, char ch)
 
     if (ch == 10) {
        if (column == len && undostack == 0) {
-                    //    wclrtoeol(pad);
+            wclrtoeol(pad);
 
             line++;
             column = 0;
-            for (int i = 0; i < winsz.ws_col -margin -1; i++) print_grey(line, i, "_");
+            for (int i = 0; i < winsz.ws_col -margin -1; i++) print_grey(line, i, " ");
             print_grey(line, column, broken_lines[line]);
             wmove(pad, line, 0);
 
             recalculate_offset();
             soft_refresh();
-// #ifdef EMSCRIPTEN
-//             return 1;
-// #endif 
         }
     } else if ((ch == 8 || ch == 7)) {
         if (undostack) {
@@ -498,7 +495,7 @@ int ovt_handle_key(overtype_t * self, char ch)
             soft_refresh();
 
             for (int i = column + undostack_size;
-                 i < winsz.ws_col -margin -1; i++) print_grey(line, i, "_");
+                 i < winsz.ws_col -margin -1; i++) print_grey(line, i, " ");
 
             for (int i = column + undostack_size;
                  i < char_len(broken_lines[line]); i++) {
