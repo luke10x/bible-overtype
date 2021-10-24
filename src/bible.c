@@ -88,6 +88,9 @@ static void loop_to_do_overtype()
     if (ovt_handle_key(overtype, ch)) {
         // Whenever the new line is addded and we need to refres all screen
         // That's maybe not exactly true ^^
+        
+        check_winsize();
+        ovt_recalculate_size(overtype, winsz);
         clear();
         ovt_render(overtype, winsz);
     }

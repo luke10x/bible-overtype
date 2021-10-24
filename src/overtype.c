@@ -448,32 +448,17 @@ char ovt_try_autotext(overtype_t * self, char ch)
 int ovt_handle_key(overtype_t * self, char ch)
 {
     char expected_ch = broken_lines[line][column];
+    size_t len = char_len(broken_lines[line]);
 
     if (ch == 10) {
-        size_t len = char_len(broken_lines[line]);
-        if (column == len && undostack == 0) {
-
+       if (column == len && undostack == 0) {
             line++;
             column = 0;
             print_grey(line, column, broken_lines[line]);
-
-
-// #ifdef EMSCRIPTEN
-//             if (strlen(broken_lines[line]) == 0) {
-//                 print_grey(line, column, " ");
-
-//             }
-// #endif
             wmove(pad, line, 0);
 
             recalculate_offset();
             soft_refresh();
-#ifdef EMSCRIPTEN
-            return 1;
-            // if (line > 0 && strlen(broken_lines[line - 1]) == 0) {
-            //     return 1;
-            // }
-#endif
         }
     } else if ((ch == 8 || ch == 7)) {
         if (undostack) {
