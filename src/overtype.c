@@ -252,7 +252,7 @@ void print_previous_lines(int number_of_lines)
 
 
     for (int i = column + undostack_size;
-        i < winsz.ws_col -margin -1; i++) print_grey(line, i, " ");
+        i < winsz.ws_col -margin -1; i++) print_grey(line, i, " "); // \xc2\xa0
 
     char *output =
         (char *) skip_n_unicode_chars_or_to_eol(column + undostack_size, input);
@@ -431,7 +431,6 @@ overtype_t *ovt_create(uint8_t * blob)
     return self;
 }
 
-
 char ovt_try_autotext(overtype_t * self, char ch)
 {
     char expected_ch = broken_lines[line][column];
@@ -457,10 +456,12 @@ int ovt_handle_key(overtype_t * self, char ch)
     if (ch == 10) {
        if (column == len && undostack == 0) {
             wclrtoeol(pad);
+            recalculate_offset();
+            soft_refresh();
 
             line++;
             column = 0;
-            for (int i = 0; i < winsz.ws_col -margin -1; i++) print_grey(line, i, " ");
+            for (int i = 0; i < winsz.ws_col -margin -1; i++) print_grey(line, i, " "); // \xc2\xa0
             print_grey(line, column, broken_lines[line]);
             wmove(pad, line, 0);
 
@@ -495,7 +496,7 @@ int ovt_handle_key(overtype_t * self, char ch)
             soft_refresh();
 
             for (int i = column + undostack_size;
-                 i < winsz.ws_col -margin -1; i++) print_grey(line, i, " ");
+                 i < winsz.ws_col -margin -1; i++) print_grey(line, i, " "); // \xc2\xa0 
 
             for (int i = column + undostack_size;
                  i < char_len(broken_lines[line]); i++) {
