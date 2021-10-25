@@ -171,6 +171,8 @@ static void loop_to_select_chapter()
 
     old_selected_index = menu_get_selected_index(chapter_menu);
 
+    int old_delta = menu_get_delta(chapter_menu);
+
     menu_handle_key(chapter_menu, ch);
     if (status_handle_key(statusbar, ch, chapter_menu)) {
         resized = 1;
@@ -181,7 +183,7 @@ static void loop_to_select_chapter()
     menu_filter(chapter_menu, search_term);
     menu_recalculate_dims(chapter_menu, winsz);
 
-    if (resized) {
+    if (resized || (old_delta != menu_get_delta(chapter_menu))) {
         resized = 0;
         clear();
 
@@ -312,10 +314,6 @@ int main(int argc, char *argv[])
         char *blob = get_stream_blob(fp);
 
         freopen("/dev/tty", "rw", stdin);
-
-//         endwin();
-//         printf("BLOB %s\r\n", blob);
-// exit(1);
 
         check_winsize();
         overtype = ovt_create((uint8_t *) blob);    // Now control is passed to the overtype
