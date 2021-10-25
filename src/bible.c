@@ -310,6 +310,7 @@ int main(int argc, char *argv[])
 
         FILE *fp = stdin;
         char *blob = get_stream_blob(fp);
+
         freopen("/dev/tty", "rw", stdin);
 
 //         endwin();

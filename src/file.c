@@ -9,8 +9,11 @@ char *get_stream_blob(FILE * fp)
     char ch;
 
     int i = 0;
+// endwin();
+        
+    while ((ch = fgetc(fp)) != EOF && ch != 255) {
+        // printf("BLOB !! %d\r\n", ch);
 
-    while ((ch = fgetc(fp)) != EOF) {
         if (i == memory - 1) {
             memory += 10;
             all = (char *) realloc(all, memory);
@@ -18,7 +21,7 @@ char *get_stream_blob(FILE * fp)
         all[i] = ch;
         i++;
     }
-
+// exit(1);
     return all;
     // printf("hudnt ''%s' (%s) %d + %d\r\n", *all, buf, total_bytes, read_bytes); exit(0);
 
