@@ -221,7 +221,7 @@ static void loop_to_select_book()
         statusbar = status_create();
 
         char *m = malloc(30);
-        sprintf(m, "%s selected, now choose a chapter:", selected_book.title);
+        sprintf(m, "%s selected. Now select a chapter", selected_book.title);
         status_set_msg(statusbar, m);
         status_render(statusbar, winsz);
 
@@ -290,8 +290,9 @@ int main(int argc, char *argv[])
         freopen("/dev/tty", "rw", stdin);
 
         statusbar = status_create();
-        char msg[20] = "Enter book:";
-        status_set_msg(statusbar, (char *) &msg);
+        char * msg = malloc(80);
+        sprintf(msg, "Select a book using cursor keys or search by name.");
+        status_set_msg(statusbar, msg);
 
         book_menu = menu_create((mitem_t *) get_all_books(), NUMBER_OF_BOOKS,
                                 sizeof(bookinfo_t), BOOK_FORMAT_LEN);
