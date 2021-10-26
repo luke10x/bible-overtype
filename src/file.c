@@ -10,7 +10,7 @@ char *get_stream_blob(FILE * fp)
 
     int i = 0;
 // endwin();
-        
+
     while ((ch = fgetc(fp)) != EOF && ch != 255) {
         // printf("BLOB !! %d\r\n", ch);
 

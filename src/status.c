@@ -32,7 +32,7 @@ void status_set_msg(status_t * self, char *msg)
 {
     self->msg = msg;
     self->search_len = 0;
-    self->search_term[0] = 0;
+    // self->search_term[0] = 0;
 }
 
 void status_render(status_t * self, struct winsize winsz)
@@ -77,7 +77,7 @@ void status_render(status_t * self, struct winsize winsz)
 
 unsigned int status_handle_key(status_t * self, char ch, menu_t * menu)
 {
-    if (((ch > '0' && ch < 'z') || ch == ' ' || ch == '.')
+    if (((ch >= '0' && ch <= 'z') || ch == ' ' || ch == '.')
         && (self->search_len < 20)) {
         if (menu_get_filtered_item_count(menu) == 1)
             return 0;           // There is only one choice

@@ -10,7 +10,6 @@
 #include <stdio.h>
 
 
-
 #include "./menu.h"
 #include "./status.h"
 #include "./common.h"
@@ -88,7 +87,7 @@ static void loop_to_do_overtype()
     if (ovt_handle_key(overtype, ch)) {
         // Whenever the new line is addded and we need to refres all screen
         // That's maybe not exactly true ^^
-        
+
         check_winsize();
         ovt_recalculate_size(overtype, winsz);
         clear();
@@ -179,6 +178,7 @@ static void loop_to_select_chapter()
     }
 
     char *search_term = status_get_search_term(statusbar);
+    // printf("Char=%s\r\n", search_term);
 
     menu_filter(chapter_menu, search_term);
     menu_recalculate_dims_vert(chapter_menu, winsz);
@@ -217,6 +217,8 @@ static void loop_to_select_book()
         resized = 1;
 
         bookinfo_t selected_book = menu_get_selected_item(book_menu)->bookinfo;
+
+        statusbar = status_create();
 
         char *m = malloc(30);
         sprintf(m, "%s selected, now choose a chapter:", selected_book.title);

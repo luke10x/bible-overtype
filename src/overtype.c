@@ -251,8 +251,8 @@ void print_previous_lines(int number_of_lines)
     // printf("seg: '%s'=input, %d!!!\r\n", input, column + undostack_size);
 
 
-    for (int i = column + undostack_size;
-        i < winsz.ws_col -margin -1; i++) print_grey(line, i, " "); // \xc2\xa0
+    for (int i = column + undostack_size; i < winsz.ws_col - margin - 1; i++)
+        print_grey(line, i, " ");   // \xc2\xa0
 
     char *output =
         (char *) skip_n_unicode_chars_or_to_eol(column + undostack_size, input);
@@ -454,14 +454,15 @@ int ovt_handle_key(overtype_t * self, char ch)
     size_t len = char_len(broken_lines[line]);
 
     if (ch == 10) {
-       if (column == len && undostack == 0) {
+        if (column == len && undostack == 0) {
             wclrtoeol(pad);
             recalculate_offset();
             soft_refresh();
 
             line++;
             column = 0;
-            for (int i = 0; i < winsz.ws_col -margin -1; i++) print_grey(line, i, " "); // \xc2\xa0
+            for (int i = 0; i < winsz.ws_col - margin - 1; i++)
+                print_grey(line, i, " ");   // \xc2\xa0
             print_grey(line, column, broken_lines[line]);
             wmove(pad, line, 0);
 
@@ -496,7 +497,8 @@ int ovt_handle_key(overtype_t * self, char ch)
             soft_refresh();
 
             for (int i = column + undostack_size;
-                 i < winsz.ws_col -margin -1; i++) print_grey(line, i, " "); // \xc2\xa0 
+                 i < winsz.ws_col - margin - 1; i++)
+                print_grey(line, i, " ");   // \xc2\xa0 
 
             for (int i = column + undostack_size;
                  i < char_len(broken_lines[line]); i++) {

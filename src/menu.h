@@ -26,6 +26,7 @@ menu_t *menu_create(const mitem_t * all_items,
 void menu_filter(menu_t * self, char *search);
 
 void menu_recalculate_dims(menu_t * self, struct winsize winsz);
+void menu_recalculate_dims_vert(menu_t * self, struct winsize winsz);
 
 void menu_render(menu_t * self, struct winsize winsz);
 void menu_render_vert(menu_t * self, struct winsize winsz);

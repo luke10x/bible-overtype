@@ -75,13 +75,12 @@ void menu_filter(menu_t * self, char *search)
     for (int i = 0; i < self->all_items_count; i++) {
         // printf("f i = %d\r\n", i);
 
-        char chapter_label[20];
 
         // TODO here it is now assuming is a book item,
         // but it also can be chapter item
         if (self->item_size == sizeof(int)) {
             const int chapter = self->all_items[i].chapter;
-            sprintf((char *) &chapter_label, "%3d", chapter);
+            sprintf(item_label, "%3d", chapter);
         } else {
             const bookinfo_t book = self->all_items[i].bookinfo;
             sprintf(item_label, "%2d. %-15s", book.id, book.title);
@@ -160,13 +159,18 @@ void menu_recalculate_dims_vert(menu_t * self, struct winsize winsz)
 {
     // differ
     self->visible_columns = winsz.ws_row - 1;
-    self->height = (int) (self->filtered_items_count * (self->item_format_len + 2)/ (self->visible_columns));
-
+    self->height =
+        (int) (self->filtered_items_count * (self->item_format_len + 1) /
+               (self->visible_columns));
+    if (((self->filtered_items_count * (self->item_format_len + 1)) %
+         self->visible_columns) > 0) {
+        self->height++;
+    }
     // if ((self->filtered_items_count % self->visible_columns) > 0) {
     //     self->height++;
     // }
-    if (self->height > (int)( winsz.ws_col / self->item_format_len) - 1) {
-        self->height = (int)( winsz.ws_col / self->item_format_len) - 1;
+    if (self->height > (int) (winsz.ws_col / self->item_format_len) - 1) {
+        self->height = (int) (winsz.ws_col / self->item_format_len) - 1;
     }
     // /differ
 
@@ -178,7 +182,7 @@ void menu_recalculate_dims_vert(menu_t * self, struct winsize winsz)
         self->delta--;
     }
 
-    int visible_width =  (int)(self->filtered_items_count / self->height); 
+    int visible_width = (int) (self->filtered_items_count / self->height);
     // if (self->filtered_items_count < self->visible_columns) {
     //     visible_width = self->filtered_items_count * self->item_format_len;
     // }
@@ -191,12 +195,13 @@ void menu_recalculate_dims_vert(menu_t * self, struct winsize winsz)
     if (winsz.ws_row > visible_width) {
         self->vpadding = (int) ((winsz.ws_row - visible_width) / 2);
 
-    //     if ((winsz.ws_row - _get_pad_width(self)) % 2) {
-    //         self->vpadding++;
-    //     }
+        //     if ((winsz.ws_row - _get_pad_width(self)) % 2) {
+        //         self->vpadding++;
+        //     }
     }
 
-    self->hpadding = (int) ((winsz.ws_col - self->height * self->item_format_len) / 2);
+    self->hpadding =
+        (int) ((winsz.ws_col - self->height * self->item_format_len) / 2);
 }
 
 
@@ -243,11 +248,12 @@ void _draw_one_book(menu_t * self, int y, int x, mitem_t item, int key,
 
     // Uncomment this later TODO (need to think how to pass along the search term)
     int pos = strpos(strlwr(s), strlwr(self->search_term));
-
     char *highlighted = malloc(strlen(self->search_term) + 1);
     highlighted[strlen(self->search_term)] = 0;
-    memcpy(highlighted, s + pos, strlen(self->search_term));
 
+    if (pos != -1) {
+        memcpy(highlighted, s + pos, strlen(self->search_term));
+    }
     int color_pair_search = PAIR_SEARCH_HIGHLIGHT;
     if (key == self->selected_index) {
         color_pair_search = PAIR_SEARCH_SELECTED;
@@ -308,8 +314,8 @@ void menu_render_vert(menu_t * self, struct winsize winsz)
     wclear(self->pad);
 
     int i = self->delta * self->height;
-        for (int x = 0; x < self->visible_columns; x++) {
-    for (int y = 0; y < self->height; y++) {
+    for (int x = 0; x < self->visible_columns; x++) {
+        for (int y = 0; y < self->height; y++) {
             if (i >= self->filtered_items_count)
                 break;
 
@@ -339,7 +345,7 @@ void menu_fast_render(menu_t * self, int old_selected_index,
 }
 
 void menu_fast_render_vert(menu_t * self, int old_selected_index,
-                      struct winsize winsz)
+                           struct winsize winsz)
 {
     int x = self->selected_index % self->height;
     int y = (int) (self->selected_index / self->height) - self->delta;
@@ -396,32 +402,32 @@ void menu_handle_key_vert(menu_t * self, char ch)
             columns++;
         }
         if (columns * self->height > self->selected_index + self->height) {
-            self->selected_index += self->height; // The move
+            self->selected_index += self->height;   // The move
             if (self->selected_index >= self->filtered_items_count) {
                 self->selected_index = self->filtered_items_count - 1;
             }
-        }       
-                // if ((self->selected_index % self->height) < self->height - 1
+        }
+        // if ((self->selected_index % self->height) < self->height - 1
         //     && (self->selected_index + 1) < self->filtered_items_count) {
         // }        
-        
+
         //     self->selected_index = self->filtered_items_count - 1;
 
-    } else if (ch == 3) { // up
+    } else if (ch == 3) {       // up
         if ((self->selected_index - self->height) >= 0) {
             self->selected_index -= self->height;
-        }        
-    } else if (ch == 4) { // left
+        }
+    } else if (ch == 4) {       // left
         if ((self->selected_index % self->height) > 0) {
             self->selected_index--;
         }
 
-    } else if (ch == 5) { // right
+    } else if (ch == 5) {       // right
         if ((self->selected_index % self->height) < self->height - 1
             && (self->selected_index + 1) < self->filtered_items_count) {
             self->selected_index++;
-        }     
-                
+        }
+
     }
 }
 
