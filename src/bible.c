@@ -173,7 +173,7 @@ static void loop_to_select_chapter()
 
     int old_delta = menu_get_delta(chapter_menu);
 
-    menu_handle_key(chapter_menu, ch);
+    menu_handle_key_vert(chapter_menu, ch);
     if (status_handle_key(statusbar, ch, chapter_menu)) {
         resized = 1;
     }
@@ -181,15 +181,14 @@ static void loop_to_select_chapter()
     char *search_term = status_get_search_term(statusbar);
 
     menu_filter(chapter_menu, search_term);
-    menu_recalculate_dims(chapter_menu, winsz);
+    menu_recalculate_dims_vert(chapter_menu, winsz);
 
     if (resized || (old_delta != menu_get_delta(chapter_menu))) {
         resized = 0;
         clear();
-
-        menu_render(chapter_menu, winsz);
+        menu_render_vert(chapter_menu, winsz);
     } else {
-        menu_fast_render(chapter_menu, old_selected_index, winsz);
+        menu_fast_render_vert(chapter_menu, old_selected_index, winsz);
     }
     status_render(statusbar, winsz);
 

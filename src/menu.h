@@ -28,11 +28,16 @@ void menu_filter(menu_t * self, char *search);
 void menu_recalculate_dims(menu_t * self, struct winsize winsz);
 
 void menu_render(menu_t * self, struct winsize winsz);
+void menu_render_vert(menu_t * self, struct winsize winsz);
 
 void menu_fast_render(menu_t * self, int old_selected_index,
                       struct winsize winsz);
 
+void menu_fast_render_vert(menu_t * self, int old_selected_index,
+                           struct winsize winsz);
+
 void menu_handle_key(menu_t * self, char ch);
+void menu_handle_key_vert(menu_t * self, char ch);
 
 mitem_t *menu_get_selected_item();
 

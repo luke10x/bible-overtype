@@ -156,6 +156,50 @@ void menu_recalculate_dims(menu_t * self, struct winsize winsz)
     self->vpadding = (int) ((winsz.ws_row - self->height) / 2);
 }
 
+void menu_recalculate_dims_vert(menu_t * self, struct winsize winsz)
+{
+    // differ
+    self->visible_columns = winsz.ws_row - 1;
+    self->height = (int) (self->filtered_items_count * (self->item_format_len + 2)/ (self->visible_columns));
+
+    // if ((self->filtered_items_count % self->visible_columns) > 0) {
+    //     self->height++;
+    // }
+    if (self->height > (int)( winsz.ws_col / self->item_format_len) - 1) {
+        self->height = (int)( winsz.ws_col / self->item_format_len) - 1;
+    }
+    // /differ
+
+    while (((int) (self->selected_index / self->height)) >=
+           ((int) (self->delta + self->visible_columns))) {
+        self->delta++;
+    }
+    while (((int) (self->selected_index / self->height)) < self->delta) {
+        self->delta--;
+    }
+
+    int visible_width =  (int)(self->filtered_items_count / self->height); 
+    // if (self->filtered_items_count < self->visible_columns) {
+    //     visible_width = self->filtered_items_count * self->item_format_len;
+    // }
+
+    self->hpadding = 0;
+    self->vpadding = 0;
+    // endwin();
+    // printf("vw = %d", visible_width);
+    // exit(1);
+    if (winsz.ws_row > visible_width) {
+        self->vpadding = (int) ((winsz.ws_row - visible_width) / 2);
+
+    //     if ((winsz.ws_row - _get_pad_width(self)) % 2) {
+    //         self->vpadding++;
+    //     }
+    }
+
+    self->hpadding = (int) ((winsz.ws_col - self->height * self->item_format_len) / 2);
+}
+
+
 void write_here(menu_t * self, const int row, const int col, int color_pair,
                 char *str, struct winsize winsz)
 {
@@ -246,6 +290,38 @@ void menu_render(menu_t * self, struct winsize winsz)
     }
 }
 
+void menu_render_vert(menu_t * self, struct winsize winsz)
+{
+    delwin(self->pad);
+
+    self->pad = newpad(winsz.ws_row - 1, winsz.ws_col);
+    if (self->pad == NULL) {
+        char *s = malloc(300);
+        sprintf(s, "Pad is not set newpad(%d, %d); failed", winsz.ws_row - 1,
+                winsz.ws_col);
+        perror(s);
+        endwin();
+        exit(1);
+    }
+
+    scrollok(self->pad, 1);
+    wclear(self->pad);
+
+    int i = self->delta * self->height;
+        for (int x = 0; x < self->visible_columns; x++) {
+    for (int y = 0; y < self->height; y++) {
+            if (i >= self->filtered_items_count)
+                break;
+
+            // Again book specific...
+            const mitem_t item = self->filtered_items[i];
+            _draw_one_book(self, x, y, item, i, winsz);
+
+            i++;
+        }
+    }
+}
+
 void menu_fast_render(menu_t * self, int old_selected_index,
                       struct winsize winsz)
 {
@@ -257,6 +333,22 @@ void menu_fast_render(menu_t * self, int old_selected_index,
 
     y = old_selected_index % self->height;
     x = (int) (old_selected_index / self->height) - self->delta;
+    _draw_one_book(self, y, x,
+                   self->filtered_items[old_selected_index],
+                   old_selected_index, winsz);
+}
+
+void menu_fast_render_vert(menu_t * self, int old_selected_index,
+                      struct winsize winsz)
+{
+    int x = self->selected_index % self->height;
+    int y = (int) (self->selected_index / self->height) - self->delta;
+    _draw_one_book(self, y, x,
+                   self->filtered_items[self->selected_index],
+                   self->selected_index, winsz);
+
+    x = old_selected_index % self->height;
+    y = (int) (old_selected_index / self->height) - self->delta;
     _draw_one_book(self, y, x,
                    self->filtered_items[old_selected_index],
                    old_selected_index, winsz);
@@ -289,6 +381,47 @@ void menu_handle_key(menu_t * self, char ch)
                 self->selected_index = self->filtered_items_count - 1;
             }
         }
+    }
+}
+
+
+void menu_handle_key_vert(menu_t * self, char ch)
+{
+    // Down
+    if (ch == 2) {
+
+        unsigned short columns =
+            (int) (self->filtered_items_count / self->height);
+        if (columns * self->height < self->filtered_items_count) {
+            columns++;
+        }
+        if (columns * self->height > self->selected_index + self->height) {
+            self->selected_index += self->height; // The move
+            if (self->selected_index >= self->filtered_items_count) {
+                self->selected_index = self->filtered_items_count - 1;
+            }
+        }       
+                // if ((self->selected_index % self->height) < self->height - 1
+        //     && (self->selected_index + 1) < self->filtered_items_count) {
+        // }        
+        
+        //     self->selected_index = self->filtered_items_count - 1;
+
+    } else if (ch == 3) { // up
+        if ((self->selected_index - self->height) >= 0) {
+            self->selected_index -= self->height;
+        }        
+    } else if (ch == 4) { // left
+        if ((self->selected_index % self->height) > 0) {
+            self->selected_index--;
+        }
+
+    } else if (ch == 5) { // right
+        if ((self->selected_index % self->height) < self->height - 1
+            && (self->selected_index + 1) < self->filtered_items_count) {
+            self->selected_index++;
+        }     
+                
     }
 }
 
