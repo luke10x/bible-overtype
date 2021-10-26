@@ -378,6 +378,7 @@ void _load_blob(uint8_t * blob)
         original_lines =
             (char **) realloc(original_lines, sizeof(char *) * (count + 1));
         original_lines[count] = (char *) malloc(strlen(pch) + 1);
+        original_lines[count][strlen(pch)] = 0; // to make all lines end properly
         strcpy(original_lines[count], pch);
         count++;
     }

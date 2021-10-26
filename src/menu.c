@@ -183,6 +183,9 @@ void menu_recalculate_dims_vert(menu_t * self, struct winsize winsz)
     }
 
     int visible_width = (int) (self->filtered_items_count / self->height);
+    if (self->filtered_items_count % self->height > 0) {
+        visible_width++;
+    }
     // if (self->filtered_items_count < self->visible_columns) {
     //     visible_width = self->filtered_items_count * self->item_format_len;
     // }

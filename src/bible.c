@@ -220,8 +220,8 @@ static void loop_to_select_book()
 
         statusbar = status_create();
 
-        char *m = malloc(30);
-        sprintf(m, "%s selected. Now select a chapter", selected_book.title);
+        char *m = malloc(80);
+        sprintf(m, "%s selected. Now select a chapter.", selected_book.title);
         status_set_msg(statusbar, m);
         status_render(statusbar, winsz);
 
