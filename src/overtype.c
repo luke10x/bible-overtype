@@ -77,7 +77,7 @@ char **broken_lines = NULL;
 
 int original_lines_total;
 
-int broken_lines_total;
+int broken_lines_total = 999999;
 
 extern struct winsize winsz;
 
@@ -589,4 +589,9 @@ void ovt_render(overtype_t * self, struct winsize winsz)
 
     recalculate_offset();
     soft_refresh();
+}
+
+int ovt_is_done(overtype_t * self)
+{
+    return line >= broken_lines_total -1;
 }

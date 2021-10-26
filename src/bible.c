@@ -35,6 +35,9 @@ menu_t *chapter_menu;
 overtype_t *overtype;
 
 
+time_t start_time;
+time_t end_time = 0;
+
 int eye = 0;
 
 static void loop_to_do_overtype()
@@ -84,7 +87,32 @@ static void loop_to_do_overtype()
 
     // check_winsize()
 
-    if (ovt_handle_key(overtype, ch)) {
+    if (ovt_is_done(overtype)) {
+
+        if (end_time == 0) end_time = time(NULL);
+        const double diff_t = difftime(end_time, start_time);
+        const int all_seconds = (int)(diff_t);
+        const int minutes = (int) (int )(all_seconds / 60);
+        const int seconds = all_seconds % 60;
+
+        printf("💯 Time: %d:%02d\r\n", minutes, seconds);
+     
+
+        char *r = malloc(80);
+
+        move(0, 0);
+
+
+
+        sprintf(r, "💯 Time: %d:%02d\r\n", minutes, seconds);
+        clear();
+
+        attron(COLOR_PAIR(1));
+        addstr(r);
+        refresh();
+
+    }
+    else if (ovt_handle_key(overtype, ch)) {
         // Whenever the new line is addded and we need to refres all screen
         // That's maybe not exactly true ^^
 
@@ -94,7 +122,6 @@ static void loop_to_do_overtype()
         ovt_render(overtype, winsz);
     }
     // curs_set(1);
-
 }
 
 
@@ -142,11 +169,16 @@ static void loop_to_select_chapter()
                utf8_line, strlen(utf8_line), ascii_line, strlen(ascii_line)
             );
 
+        start_time = time(NULL);
+
+
         overtype = ovt_create(blob);    // Now control is passed to the overtype
         ovt_recalculate_size(overtype, winsz);
         resized = 1;
 
         curs_set(1);
+
+
 
 #ifdef EMSCRIPTEN
         emscripten_set_main_loop(loop_to_do_overtype, 1000 / 50, FALSE);
