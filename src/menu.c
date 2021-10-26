@@ -152,7 +152,7 @@ void menu_recalculate_dims(menu_t * self, struct winsize winsz)
         }
     }
 
-    self->vpadding = (int) ((winsz.ws_row - self->height) / 2);
+    self->vpadding = (int) ((winsz.ws_row - 1 - self->height) / 2);
 }
 
 void menu_recalculate_dims_vert(menu_t * self, struct winsize winsz)
@@ -196,7 +196,7 @@ void menu_recalculate_dims_vert(menu_t * self, struct winsize winsz)
     // printf("vw = %d", visible_width);
     // exit(1);
     if (winsz.ws_row > visible_width) {
-        self->vpadding = (int) ((winsz.ws_row - visible_width) / 2);
+        self->vpadding = (int) ((winsz.ws_row - 1 - visible_width) / 2);
 
         //     if ((winsz.ws_row - _get_pad_width(self)) % 2) {
         //         self->vpadding++;

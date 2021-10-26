@@ -199,7 +199,7 @@ Module['FS_createPath']("/usr/share", "bible", true, true);
     }
   
    }
-   loadPackage({"files": [{"filename": "/usr/share/bible/chapter-index-kjv.bin", "start": 0, "end": 9512}, {"filename": "/usr/share/bible/the-king-james-bible.txt", "start": 9512, "end": 4342008}], "remote_package_size": 4342008, "package_uuid": "69b4c0fa-53b4-4714-a7fb-7be86e1c4931"});
+   loadPackage({"files": [{"filename": "/usr/share/bible/chapter-index-kjv.bin", "start": 0, "end": 9512}, {"filename": "/usr/share/bible/the-king-james-bible.txt", "start": 9512, "end": 4342008}], "remote_package_size": 4342008, "package_uuid": "46978284-3e86-4825-b186-fa7cb0a6bc59"});
   
   })();
   

@@ -327,7 +327,13 @@ void break_blob(int screen_width)
     int longest_line = 0;
 
     for (int i = 0; i < original_lines_total; i++) {
-        int this_len = char_len(original_lines[i]);
+
+        int this_len = 0;
+        if (original_lines[i] != NULL) {
+            this_len = char_len(original_lines[i]);
+        } else {
+            original_lines[i][0] = '0';
+        }
         if (this_len > longest_line) {
             longest_line = this_len;
         }
@@ -378,8 +384,8 @@ void _load_blob(uint8_t * blob)
         original_lines =
             (char **) realloc(original_lines, sizeof(char *) * (count + 1));
         original_lines[count] = (char *) malloc(strlen(pch) + 1);
-        original_lines[count][strlen(pch)] = 0; // to make all lines end properly
         strcpy(original_lines[count], pch);
+        original_lines[count][strlen(pch)] = 0; // to make all lines end properly
         count++;
     }
     free(tofree);

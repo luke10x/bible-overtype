@@ -19,6 +19,7 @@ bible:
 
 clean:
 	rm -fr overtype bible empty overtype.pid \
+		core \
 		*.wasm *.js *.data \
 		obj/* *~ src/*~
 
