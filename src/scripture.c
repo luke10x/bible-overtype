@@ -136,7 +136,14 @@ const size_t get_chapter_blob(uint8_t ** blob, char *book_title,
     printf("LOC Start: %u; End: %u;\r\n", start, end);
 
     size_t bloblen = (end - start); // * sizeof(uint8_t);
-    *blob = malloc(bloblen);
+    
+    char *p;
+    p = *blob = malloc(bloblen * sizeof(uint8_t));
+    
+    // Adding zero here will ensure the blob is always properly terminated
+    // Interestingly it is always correct in WASM,
+    // perhaps it is using a different way to fread
+    p[bloblen] = 0;
 
     FILE *fp_ = fopen("usr/share/bible/the-king-james-bible.txt", "r");
     fseek(fp_, start, SEEK_SET);
