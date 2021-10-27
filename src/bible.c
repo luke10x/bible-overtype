@@ -38,10 +38,44 @@ overtype_t *overtype;
 time_t start_time;
 time_t end_time = 0;
 
+int printed = 0;
+
 int eye = 0;
 
 static void loop_to_do_overtype()
 {
+
+    if (ovt_is_done(overtype)) {
+
+        if (end_time == 0) end_time = time(NULL);
+        const double diff_t = difftime(end_time, start_time);
+        const int all_seconds = (int)(diff_t);
+        const int minutes = (int) (int )(all_seconds / 60);
+        const int seconds = all_seconds % 60;
+     
+
+        char *r = malloc(80);
+
+        move(0, 0);
+
+        if (!printed) {
+
+            bookinfo_t book = menu_get_selected_item(book_menu)->bookinfo;
+            chapter_t chapter = menu_get_selected_item(chapter_menu)->chapter;
+
+            printf("✅ %s book, chapter %d completed. ", book.title, chapter);
+            printf("(⏱️ %d:%02d)\r\n", minutes, seconds);
+
+            sprintf(r, "💯 Time: %d:%02d\r\n", minutes, seconds);
+            attron(COLOR_PAIR(1));
+            addstr(r);
+            printed = 1;
+            refresh();
+        }
+        // clear();
+
+        return;
+    }
     curs_set(1);
 
 
@@ -86,33 +120,7 @@ static void loop_to_do_overtype()
     // curs_set(0);
 
     // check_winsize()
-
-    if (ovt_is_done(overtype)) {
-
-        if (end_time == 0) end_time = time(NULL);
-        const double diff_t = difftime(end_time, start_time);
-        const int all_seconds = (int)(diff_t);
-        const int minutes = (int) (int )(all_seconds / 60);
-        const int seconds = all_seconds % 60;
-
-        printf("💯 Time: %d:%02d\r\n", minutes, seconds);
-     
-
-        char *r = malloc(80);
-
-        move(0, 0);
-
-
-
-        sprintf(r, "💯 Time: %d:%02d\r\n", minutes, seconds);
-        clear();
-
-        attron(COLOR_PAIR(1));
-        addstr(r);
-        refresh();
-
-    }
-    else if (ovt_handle_key(overtype, ch)) {
+    if (ovt_handle_key(overtype, ch)) {
         // Whenever the new line is addded and we need to refres all screen
         // That's maybe not exactly true ^^
 
