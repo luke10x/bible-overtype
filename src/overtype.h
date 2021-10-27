@@ -10,7 +10,7 @@
 // These also need to be repeaded in the implementation file
 typedef struct overtype_t overtype_t;
 
-overtype_t *ovt_create(uint8_t *blob);
+overtype_t *ovt_create(uint8_t *blob, char *title);
 
 int ovt_handle_key(overtype_t *self, char ch);
 
@@ -20,6 +20,6 @@ void ovt_recalculate_size(overtype_t *self, struct winsize winsz);
 
 void ovt_render(overtype_t *self, struct winsize winsz);
 
-int ovt_is_done(overtype_t * self);
+int ovt_is_done(overtype_t *self);
 
 #endif

@@ -1,6 +1,5 @@
 #include <curses.h>
 #include <stdlib.h>
-#include <time.h>
 #include <locale.h>
 #include <string.h>
 #include <sys/ioctl.h>
@@ -35,45 +34,12 @@ menu_t *chapter_menu;
 overtype_t *overtype;
 
 
-time_t start_time;
-time_t end_time = 0;
-
-int printed = 0;
-
 int eye = 0;
 
 static void loop_to_do_overtype()
 {
 
     if (ovt_is_done(overtype)) {
-
-        if (end_time == 0) end_time = time(NULL);
-        const double diff_t = difftime(end_time, start_time);
-        const int all_seconds = (int)(diff_t);
-        const int minutes = (int) (int )(all_seconds / 60);
-        const int seconds = all_seconds % 60;
-     
-
-        char *r = malloc(80);
-
-        move(0, 0);
-
-        if (!printed) {
-
-            bookinfo_t book = menu_get_selected_item(book_menu)->bookinfo;
-            chapter_t chapter = menu_get_selected_item(chapter_menu)->chapter;
-
-            printf("✅ %s book, chapter %d completed. ", book.title, chapter);
-            printf("(⏱️ %d:%02d)\r\n", minutes, seconds);
-
-            sprintf(r, "💯 Time: %d:%02d\r\n", minutes, seconds);
-            attron(COLOR_PAIR(1));
-            addstr(r);
-            printed = 1;
-            refresh();
-        }
-        // clear();
-
         return;
     }
     curs_set(1);
@@ -177,10 +143,10 @@ static void loop_to_select_chapter()
                utf8_line, strlen(utf8_line), ascii_line, strlen(ascii_line)
             );
 
-        start_time = time(NULL);
+        char *title = malloc(80);
 
-
-        overtype = ovt_create(blob);    // Now control is passed to the overtype
+        sprintf(title, "%s book, chapter %d", book.title, chapter);
+        overtype = ovt_create(blob, title);    // Now control is passed to the overtype
         ovt_recalculate_size(overtype, winsz);
         resized = 1;
 
@@ -358,7 +324,7 @@ int main(int argc, char *argv[])
         freopen("/dev/tty", "rw", stdin);
 
         check_winsize();
-        overtype = ovt_create((uint8_t *) blob);    // Now control is passed to the overtype
+        overtype = ovt_create((uint8_t *) blob, "Stream");    // Now control is passed to the overtype
         ovt_recalculate_size(overtype, winsz);
         resized = 1;
 

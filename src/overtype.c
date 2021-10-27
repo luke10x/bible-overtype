@@ -10,12 +10,8 @@
 #include <inttypes.h>
 #include <wchar.h>
 #include <math.h>
+#include <time.h>
 
-// #include <unitypes.h>
-// #include <uniconv.h>
-// #include <unistdio.h>
-// #include <unistr.h>
-// #include <uniwidth.h>
 #include <utf8proc.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -28,7 +24,9 @@ typedef struct overtype_t overtype_t;
 
 struct overtype_t {
     bool autotext_started;
-
+    time_t start_time;
+    time_t end_time;
+    char *title;
 };
 ///// Unrefactored ///////////////
 
@@ -424,7 +422,7 @@ int _is_same(char expected, char pressed)
 }
 
 
-overtype_t *ovt_create(uint8_t * blob)
+overtype_t *ovt_create(uint8_t * blob, char *title)
 {
     overtype_t *self = malloc(sizeof(overtype_t));
 
@@ -435,14 +433,17 @@ overtype_t *ovt_create(uint8_t * blob)
     undostack = NULL;
 
     self->autotext_started = 0;
+
+    self->start_time = time(NULL);
+    self->end_time = 0;
+    self->title = title;
+
     return self;
 }
 
 char ovt_try_autotext(overtype_t * self, char ch)
 {
     char expected_ch = broken_lines[line][column];
-
-    // printf("\r\n%c\r\n",expected_ch);
 
     self->autotext_started =
         should_autotext(self->autotext_started, broken_lines[line], column,
@@ -593,5 +594,22 @@ void ovt_render(overtype_t * self, struct winsize winsz)
 
 int ovt_is_done(overtype_t * self)
 {
-    return line >= broken_lines_total -1;
+    if (line < broken_lines_total -1) return 0;
+
+    if (self->end_time == 0) {
+        self->end_time = time(NULL);
+
+        const double diff_t = difftime(self->end_time, self->start_time);
+        const int all_seconds = (int)(diff_t);
+        const int minutes = (int)(all_seconds / 60);
+        const int seconds = all_seconds % 60;
+        
+        char *r = malloc(80);
+
+        sprintf(r, "%s completed (%d:%02d).", self->title, minutes, seconds);
+        
+        print_grey(line, 0, r);
+        soft_refresh();
+    }
+    return 1;
 }

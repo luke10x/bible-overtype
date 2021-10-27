@@ -199,7 +199,7 @@ Module['FS_createPath']("/usr/share", "bible", true, true);
     }
   
    }
-   loadPackage({"files": [{"filename": "/usr/share/bible/chapter-index-kjv.bin", "start": 0, "end": 9512}, {"filename": "/usr/share/bible/the-king-james-bible.txt", "start": 9512, "end": 4342008}], "remote_package_size": 4342008, "package_uuid": "46978284-3e86-4825-b186-fa7cb0a6bc59"});
+   loadPackage({"files": [{"filename": "/usr/share/bible/chapter-index-kjv.bin", "start": 0, "end": 9512}, {"filename": "/usr/share/bible/the-king-james-bible.txt", "start": 9512, "end": 4342008}], "remote_package_size": 4342008, "package_uuid": "e831da58-76b4-4504-81bf-6517fc2394d7"});
   
   })();
   
@@ -5273,22 +5273,22 @@ var tempI64;
 // === Body ===
 
 var ASM_CONSTS = {
-  329092: function($0, $1) {term.cursorSet($0, $1);},  
- 329120: function($0, $1, $2, $3) {term.setChar($0, $1, $2, $3);},  
- 329154: function() {return term.crsrBlinkMode ? 0 : term.crsrBlockMode ? 1 : 2;},  
- 329218: function() {return term.conf.rows;},  
- 329245: function() {return term.conf.cols;},  
- 329272: function() {return term.inputChar;},  
- 329299: function() {var c = term.inputChar; term.inputChar = 0; return c;},  
- 329357: function() {term.inputChar = 0},  
- 329376: function() {term.close()},  
- 329389: function() {term = new Terminal({ termDiv: 'termDiv', handler: function() {}, x: 0, y: 0, initHandler: function() { term.charMode = true; term.lock = false; term.cursorOn(); } }); term.open();},  
- 329570: function($0, $1) {term.resizeTo($0, $1);},  
- 329597: function($0) {term.handler = function() { Runtime.dynCall('v', $0); }; term.orig_resizeTo = term.orig_resizeTo || term.resizeTo; term.resizeTo = function(x,y) { var r = this.orig_resizeTo(x,y); if (r) Runtime.dynCall('v', $0); return r; };},  
- 329827: function() {throw 'SimulateInfiniteLoop'},  
- 329856: function($0, $1) {term.resizeTo($0, $1);},  
- 329883: function() {term.cursorOn()},  
- 329899: function() {term.cursorOff()}
+  329140: function($0, $1) {term.cursorSet($0, $1);},  
+ 329168: function($0, $1, $2, $3) {term.setChar($0, $1, $2, $3);},  
+ 329202: function() {return term.crsrBlinkMode ? 0 : term.crsrBlockMode ? 1 : 2;},  
+ 329266: function() {return term.conf.rows;},  
+ 329293: function() {return term.conf.cols;},  
+ 329320: function() {return term.inputChar;},  
+ 329347: function() {var c = term.inputChar; term.inputChar = 0; return c;},  
+ 329405: function() {term.inputChar = 0},  
+ 329424: function() {term.close()},  
+ 329437: function() {term = new Terminal({ termDiv: 'termDiv', handler: function() {}, x: 0, y: 0, initHandler: function() { term.charMode = true; term.lock = false; term.cursorOn(); } }); term.open();},  
+ 329618: function($0, $1) {term.resizeTo($0, $1);},  
+ 329645: function($0) {term.handler = function() { Runtime.dynCall('v', $0); }; term.orig_resizeTo = term.orig_resizeTo || term.resizeTo; term.resizeTo = function(x,y) { var r = this.orig_resizeTo(x,y); if (r) Runtime.dynCall('v', $0); return r; };},  
+ 329875: function() {throw 'SimulateInfiniteLoop'},  
+ 329904: function($0, $1) {term.resizeTo($0, $1);},  
+ 329931: function() {term.cursorOn()},  
+ 329947: function() {term.cursorOff()}
 };
 
 
@@ -7862,6 +7862,10 @@ var ASM_CONSTS = {
   }
   }
 
+  function _difftime(time1, time0) {
+      return time1 - time0;
+    }
+
   var readAsmConstArgsArray = [];
   function readAsmConstArgs(sigPtr, buf) {
       // Nobody should have mutated _readAsmConstArgsArray underneath us to be something else than an array.
@@ -8868,6 +8872,14 @@ var ASM_CONSTS = {
       setTempRet0(val);
     }
 
+  function _time(ptr) {
+      var ret = (Date.now()/1000)|0;
+      if (ptr) {
+        HEAP32[((ptr)>>2)] = ret;
+      }
+      return ret;
+    }
+
 
   var FSNode = /** @constructor */ function(parent, name, mode, rdev) {
     if (!parent) {
@@ -9153,6 +9165,7 @@ var asmLibraryArg = {
   "__sys_fcntl64": ___sys_fcntl64,
   "__sys_ioctl": ___sys_ioctl,
   "__sys_open": ___sys_open,
+  "difftime": _difftime,
   "emscripten_asm_const_int": _emscripten_asm_const_int,
   "emscripten_cancel_main_loop": _emscripten_cancel_main_loop,
   "emscripten_memcpy_big": _emscripten_memcpy_big,
@@ -9165,7 +9178,8 @@ var asmLibraryArg = {
   "fd_read": _fd_read,
   "fd_seek": _fd_seek,
   "fd_write": _fd_write,
-  "setTempRet0": _setTempRet0
+  "setTempRet0": _setTempRet0,
+  "time": _time
 };
 var asm = createWasm();
 /** @type {function(...*):?} */
