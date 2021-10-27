@@ -580,7 +580,7 @@ void ovt_recalculate_size(overtype_t * self, struct winsize winsz)
 
 void ovt_render(overtype_t * self, struct winsize winsz)
 {
-    pad = newpad(broken_lines_total, winsz.ws_col - margin);
+    pad = newpad(broken_lines_total+2, winsz.ws_col - margin);
 
     wmove(pad, line, column);
     recalculate_offset();
@@ -607,7 +607,9 @@ int ovt_is_done(overtype_t * self)
         char *r = malloc(80);
 
         sprintf(r, "%s completed (%d:%02d).", self->title, minutes, seconds);
+        print_grey(line, 0, "--");
         
+        line++;
         print_grey(line, 0, r);
         soft_refresh();
     }
