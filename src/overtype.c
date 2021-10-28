@@ -586,7 +586,7 @@ void ovt_recalculate_size(overtype_t * self, struct winsize winsz)
 
 void ovt_render(overtype_t * self, struct winsize winsz)
 {
-    pad = newpad(broken_lines_total+2, winsz.ws_col - margin);
+    pad = newpad(broken_lines_total+3, winsz.ws_col - margin);
 
     wmove(pad, line, column);
     recalculate_offset();
@@ -600,7 +600,7 @@ void ovt_render(overtype_t * self, struct winsize winsz)
 
 int ovt_is_done(overtype_t * self)
 {
-    if (line < broken_lines_total -1) return 0;
+    if (line < broken_lines_total) return 0;
 
     if (self->end_time == 0) {
         self->end_time = time(NULL);
@@ -610,13 +610,18 @@ int ovt_is_done(overtype_t * self)
         const int minutes = (int)(all_seconds / 60);
         const int seconds = all_seconds % 60;
         
-        char *r = malloc(80);
-
-        sprintf(r, "%s completed (%d:%02d).", self->title, minutes, seconds);
         print_grey(line, 0, "--");
-        
+
         line++;
+        recalculate_offset();
+        soft_refresh();
+
+        char *r = malloc(80);
+        sprintf(r, "%s completed (%d:%02d).", self->title, minutes, seconds);
         print_grey(line, 0, r);
+
+        line++;
+        recalculate_offset();
         soft_refresh();
     }
     return 1;
