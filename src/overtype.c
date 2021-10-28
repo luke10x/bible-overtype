@@ -328,7 +328,11 @@ void break_blob(int screen_width)
 
         int this_len = 0;
         if (original_lines[i] != NULL) {
-            this_len = char_len(original_lines[i]);
+
+            // TODO here it should be width and not length escalated!!!!
+            // WARNING this is is a quick wo for a segfault
+            this_len = strlen(original_lines[i]);
+
         } else {
             original_lines[i][0] = '0';
         }
@@ -392,7 +396,7 @@ void _load_blob(uint8_t * blob)
 }
 
 /////////// clean api ///////////////
-
+// That night, he went home hungry.
 
 int _is_same(char expected, char pressed)
 {
@@ -468,14 +472,16 @@ int ovt_handle_key(overtype_t * self, char ch)
             soft_refresh();
 
             line++;
-            column = 0;
-            for (int i = 0; i < winsz.ws_col - margin - 1; i++)
-                print_grey(line, i, " ");   // \xc2\xa0
-            print_grey(line, column, broken_lines[line]);
-            wmove(pad, line, 0);
+            if (line < broken_lines_total) {
+                column = 0;
+                for (int i = 0; i < winsz.ws_col - margin - 1; i++)
+                    print_grey(line, i, " ");   // \xc2\xa0
+                print_grey(line, column, broken_lines[line]);
+                wmove(pad, line, 0);
 
-            recalculate_offset();
-            soft_refresh();
+                recalculate_offset();
+                soft_refresh();
+            }
         }
     } else if ((ch == 8 || ch == 7)) {
         if (undostack) {
