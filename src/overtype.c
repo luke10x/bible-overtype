@@ -519,12 +519,17 @@ int ovt_handle_key(overtype_t * self, char ch)
             undostack = undostack->next;
             undostack_size--;
 
-            uint32_t correct_ch = broken_lines[line][last_char_pos];
-            if (correct_ch == 0) {
-                correct_ch = 32;
-            }
-            char str[MAX_LEN] = { 0, 0, 0, 0, 0 };
-            sprintf(str, "%lc", correct_ch);
+            // char *exstr = get_utf_char_at_from_string(column, broken_lines[line]);
+            // uint32_t correct_ch = broken_lines[line][last_char_pos];
+            
+
+            // if (correct_ch == 0) {
+            //     correct_ch = 32;
+            // }
+            // char str[MAX_LEN] = { 0, 0, 0, 0, 0 };
+            // sprintf(str, "%c", correct_ch);
+
+            // char str = get_utf_char_at_from_string(column, broken_lines[line]); // 
 
             // wdelch(pad);
             // wdelch(pad);
@@ -541,9 +546,14 @@ int ovt_handle_key(overtype_t * self, char ch)
 
             for (int i = column + undostack_size;
                  i < char_len(broken_lines[line]); i++) {
-                uint32_t new_ch = broken_lines[line][i];
-                char str[MAX_LEN] = { 0, 0, 0, 0, 0 };
-                sprintf(str, "%lc", new_ch);
+                
+                
+                // uint32_t new_ch = broken_lines[line][i];
+                // char str[MAX_LEN] = { 0, 0, 0, 0, 0 };
+                // sprintf(str, "%c", new_ch);
+
+                char *str = get_utf_char_at_from_string(i, broken_lines[line]);
+
                 print_grey(line, i, str);
             }
             wmove(pad, line, last_char_pos);
