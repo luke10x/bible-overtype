@@ -12,4 +12,6 @@ linebreaker_t *lnbr_create(char *long_line, int max_width);
 
 char *lnbr_take_some(linebreaker_t *linebreaker);
 
+char *get_utf_char_at_from_string(int pos, char *str);
+
 #endif

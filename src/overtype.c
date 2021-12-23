@@ -403,9 +403,13 @@ int _is_same(char expected, char pressed)
     if (pressed == 10 && expected == 0) {
         true;
     }
+    // if (pressed != expected) {
+
+    //     endwin(); printf("preseed %c; expected %c (%d);>\r\n", pressed, expected, expected); exit(1);
+    // }
 
     char *str_expected = malloc(2);
-    str_expected[0] = expected;
+    str_expected[0] = (unsigned char) expected;
     str_expected[1] = 0;
 
     char *str_pressed = malloc(2);
@@ -413,9 +417,13 @@ int _is_same(char expected, char pressed)
     str_pressed[1] = 0;
 
     char *ascii_expected = fold2ascii(str_expected);
+    // char *ascii_expected = &str_expected;
     char *ascii_pressed = fold2ascii(str_pressed);
 
-    // endwin(); printf("p %c %c %s %s>\r\n", pressed, expected, ascii_pressed, ascii_expected); exit(1);
+    // if (pressed != expected) {
+
+    //     endwin(); printf("preseed %c; expected %c (%d); pr %s; ex %s;>\r\n", pressed, expected, expected, ascii_pressed, ascii_expected); exit(1);
+    // }
 
     int result = ascii_expected[0] == ascii_pressed[0];
     if (!result) {
@@ -462,7 +470,24 @@ char ovt_try_autotext(overtype_t * self, char ch)
 
 int ovt_handle_key(overtype_t * self, char ch)
 {
-    char expected_ch = broken_lines[line][column];
+// endwin();
+    char *exstr = get_utf_char_at_from_string(column, broken_lines[line]);
+    char expected_ch = fold2ascii(exstr)[0];
+        const size_t expected_size_in_bytes = strlen(exstr);
+
+
+    const size_t size_in_bytes = strlen(exstr);
+    // printf("sizein bytes = %d \r\n", size_in_bytes);
+
+            //  printf("exstr  '%s sx(%d)' [%u, %d, %d, %d] ;; expected_ch = '%c' (%d) >\r\n", exstr, expected_size_in_bytes, 
+            //  (uint8_t) exstr[0], (uint8_t)exstr[1], (uint8_t)exstr[2], (uint8_t)exstr[3], expected_ch, expected_ch); // exit(1);
+
+
+    // if (pressed != expected) {
+
+    //     endwin(); printf("preseed %c; expected %c (%d);>\r\n", pressed, expected, expected); exit(1);
+    // }
+
     size_t len = char_len(broken_lines[line]);
 
     if (ch == 10) {
@@ -537,8 +562,10 @@ int ovt_handle_key(overtype_t * self, char ch)
 
         if (_is_same(expected_ch, ch) && undostack == NULL) {
             write_here_str(GOOD_PAIR, expected_ch_as_str);
-            cursor++;
-            column++;
+            cursor ++; //= expected_size_in_bytes;
+            column ++; //= expected_size_in_bytes;
+            // cursor += expected_size_in_bytes;
+            // column ++; // expected_size_in_bytes;
         } else {
 
             if (margin + column + undostack_size < winsz.ws_col - 1) {

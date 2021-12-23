@@ -199,7 +199,7 @@ Module['FS_createPath']("/usr/share", "bible", true, true);
     }
   
    }
-   loadPackage({"files": [{"filename": "/usr/share/bible/chapter-index-kjv.bin", "start": 0, "end": 9512}, {"filename": "/usr/share/bible/the-king-james-bible.txt", "start": 9512, "end": 4342008}], "remote_package_size": 4342008, "package_uuid": "a703a225-9c01-4b90-9372-5fb9b3f16b9a"});
+   loadPackage({"files": [{"filename": "/usr/share/bible/chapter-index-kjv.bin", "start": 0, "end": 9512}, {"filename": "/usr/share/bible/the-king-james-bible.txt", "start": 9512, "end": 4342008}], "remote_package_size": 4342008, "package_uuid": "1b5b5a32-47c2-45b5-afab-161b08be8aaf"});
   
   })();
   
@@ -5273,22 +5273,22 @@ var tempI64;
 // === Body ===
 
 var ASM_CONSTS = {
-  329140: function($0, $1) {term.cursorSet($0, $1);},  
- 329168: function($0, $1, $2, $3) {term.setChar($0, $1, $2, $3);},  
- 329202: function() {return term.crsrBlinkMode ? 0 : term.crsrBlockMode ? 1 : 2;},  
- 329266: function() {return term.conf.rows;},  
- 329293: function() {return term.conf.cols;},  
- 329320: function() {return term.inputChar;},  
- 329347: function() {var c = term.inputChar; term.inputChar = 0; return c;},  
- 329405: function() {term.inputChar = 0},  
- 329424: function() {term.close()},  
- 329437: function() {term = new Terminal({ termDiv: 'termDiv', handler: function() {}, x: 0, y: 0, initHandler: function() { term.charMode = true; term.lock = false; term.cursorOn(); } }); term.open();},  
- 329618: function($0, $1) {term.resizeTo($0, $1);},  
- 329645: function($0) {term.handler = function() { Runtime.dynCall('v', $0); }; term.orig_resizeTo = term.orig_resizeTo || term.resizeTo; term.resizeTo = function(x,y) { var r = this.orig_resizeTo(x,y); if (r) Runtime.dynCall('v', $0); return r; };},  
- 329875: function() {throw 'SimulateInfiniteLoop'},  
- 329904: function($0, $1) {term.resizeTo($0, $1);},  
- 329931: function() {term.cursorOn()},  
- 329947: function() {term.cursorOff()}
+  329316: function($0, $1) {term.cursorSet($0, $1);},  
+ 329344: function($0, $1, $2, $3) {term.setChar($0, $1, $2, $3);},  
+ 329378: function() {return term.crsrBlinkMode ? 0 : term.crsrBlockMode ? 1 : 2;},  
+ 329442: function() {return term.conf.rows;},  
+ 329469: function() {return term.conf.cols;},  
+ 329496: function() {return term.inputChar;},  
+ 329523: function() {var c = term.inputChar; term.inputChar = 0; return c;},  
+ 329581: function() {term.inputChar = 0},  
+ 329600: function() {term.close()},  
+ 329613: function() {term = new Terminal({ termDiv: 'termDiv', handler: function() {}, x: 0, y: 0, initHandler: function() { term.charMode = true; term.lock = false; term.cursorOn(); } }); term.open();},  
+ 329794: function($0, $1) {term.resizeTo($0, $1);},  
+ 329821: function($0) {term.handler = function() { Runtime.dynCall('v', $0); }; term.orig_resizeTo = term.orig_resizeTo || term.resizeTo; term.resizeTo = function(x,y) { var r = this.orig_resizeTo(x,y); if (r) Runtime.dynCall('v', $0); return r; };},  
+ 330051: function() {throw 'SimulateInfiniteLoop'},  
+ 330080: function($0, $1) {term.resizeTo($0, $1);},  
+ 330107: function() {term.cursorOn()},  
+ 330123: function() {term.cursorOff()}
 };
 
 

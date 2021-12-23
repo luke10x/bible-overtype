@@ -35,6 +35,10 @@ static void init_colors()
 
 static void init_screen()
 {
+    // Locale has to be set before the call to iniscr()
+    // without it is will not print multibyte chars in one terminal char
+    setlocale(LC_ALL, "");
+
 #ifdef XCURSES
     Xinitscr(argc, argv);
 #else
