@@ -566,12 +566,12 @@ int ovt_handle_key(overtype_t * self, char ch)
         ch_as_str[0] = ch;
         ch_as_str[1] = 0;
 
-        char *expected_ch_as_str = malloc(2);
-        expected_ch_as_str[0] = expected_ch;
-        expected_ch_as_str[1] = 0;
+        // char *expected_ch_as_str = malloc(2);
+        // expected_ch_as_str[0] = expected_ch;
+        // expected_ch_as_str[1] = 0;
 
         if (_is_same(expected_ch, ch) && undostack == NULL) {
-            write_here_str(GOOD_PAIR, expected_ch_as_str);
+            write_here_str(GOOD_PAIR, exstr);
             cursor ++; //= expected_size_in_bytes;
             column ++; //= expected_size_in_bytes;
             // cursor += expected_size_in_bytes;
