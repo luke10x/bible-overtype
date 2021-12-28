@@ -1,5 +1,16 @@
 # Overtype Bible Chapters with this Software!!!
 
+### Using standard input
+
+Just like typing chapters from the Bible, you can use `--stdin` flag,
+to type instead any text from standard input stream.
+
+For example:
+
+    curl https://www.rfc-editor.org/rfc/rfc3629.txt | ./bible --stdin 
+
+    man 7 utf8 | ./bible --stdin
+
 ### How to compile for WASM
 
     # make sure emcc is in path:
