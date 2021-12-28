@@ -33,25 +33,39 @@ menu_t *book_menu;
 menu_t *chapter_menu;
 overtype_t *overtype;
 
-
 int eye = 0;
+
+char *toUrlParam(char *str)
+{
+    size_t len = strlen(str);
+    char *str_l = malloc((len+1) * sizeof(char));
+
+    for (size_t i = 0; i < len; i++) {
+        str_l[i] = tolower(str[i]);
+        if (str[i] == ' ') {
+            str_l[i] = '-';
+        }
+    }
+    return str_l;
+}
 
 static void loop_to_do_overtype()
 {
+    char *chapter_string = NULL;
 
-    if (ovt_is_done(overtype)) {
+    if (book_menu != NULL && chapter_menu != NULL) {
+        char *book = toUrlParam(menu_get_selected_item(book_menu)->bookinfo.title);
+        chapter_t chapter = menu_get_selected_item(chapter_menu)->chapter;
+        chapter_string = malloc(10);
+        sprintf(chapter_string, "%s,%d", book, chapter);
+    }
+    if (ovt_is_done(overtype, chapter_string)) {
         return;
     }
     curs_set(1);
 
-
-
     char ch = ovt_try_autotext(overtype, getch());
     check_winsize();
-    // ovt_recalculate_size(overtype, winsz);
-
-
-
 
     if (ch == -1 || ch == 255 || ch == 6 || ch == -102) {
 

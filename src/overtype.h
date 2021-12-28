@@ -20,6 +20,6 @@ void ovt_recalculate_size(overtype_t *self, struct winsize winsz);
 
 void ovt_render(overtype_t *self, struct winsize winsz);
 
-int ovt_is_done(overtype_t *self);
+int ovt_is_done(overtype_t *self, char *print_this_if_done);
 
 #endif

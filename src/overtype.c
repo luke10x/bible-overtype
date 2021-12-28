@@ -623,7 +623,7 @@ void ovt_recalculate_size(overtype_t * self, struct winsize winsz)
 
 void ovt_render(overtype_t * self, struct winsize winsz)
 {
-    pad = newpad(broken_lines_total+3, winsz.ws_col - margin);
+    pad = newpad(broken_lines_total+5, winsz.ws_col - margin);
 
     wmove(pad, line, column);
     recalculate_offset();
@@ -635,7 +635,7 @@ void ovt_render(overtype_t * self, struct winsize winsz)
     soft_refresh();
 }
 
-int ovt_is_done(overtype_t * self)
+int ovt_is_done(overtype_t * self, char *print_this_if_done)
 {
     if (line < broken_lines_total) return 0;
 
@@ -653,13 +653,34 @@ int ovt_is_done(overtype_t * self)
         recalculate_offset();
         soft_refresh();
 
-        char *r = malloc(80);
+        char *r = malloc(180);
         sprintf(r, "%s completed (%d:%02d).", self->title, minutes, seconds);
         print_grey(line, 0, r);
 
         line++;
         recalculate_offset();
         soft_refresh();
+
+        if (print_this_if_done != NULL) {
+            print_grey(line, 0, "Log activity on:");
+
+            line++;
+            recalculate_offset();
+            soft_refresh();
+
+            sprintf(
+                r,
+                "https://bible-track.herokuapp.com/go?c=%s&t=%d+%d",
+                print_this_if_done,
+                self->start_time,
+                all_seconds
+            );
+            print_grey(line, 0, r);
+
+            line++;
+            recalculate_offset();
+            soft_refresh();
+        }
     }
     return 1;
 }
