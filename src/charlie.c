@@ -7,7 +7,7 @@ char *fold2ascii(char *str)
 {
     unsigned char *output;
 
-    const size_t size_in_bytes = strlen(str) + 1;
+    const size_t size_in_bytes = strlen(str) * 3 + 1; // *2 is here because otherwise it segfaults in Psalms 23
 
     utf8proc_map((unsigned char *) str, size_in_bytes, &output,
                  UTF8PROC_DECOMPOSE | UTF8PROC_NULLTERM | UTF8PROC_STABLE |
@@ -21,8 +21,6 @@ char is_mb_char_head(char ch)
     int seventh = (ch >> 7) & 1;
     int sixth = (ch >> 6) & 1;
 
-
-// printf("eventh=%d sixth=%d", seventh, sixth);
     return (seventh && sixth);
 }
 
