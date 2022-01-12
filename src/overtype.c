@@ -265,7 +265,7 @@ void print_previous_lines(int number_of_lines)
 int this_is_lnumber_start(const char *line, int typed)
 {
     const char expected_ch = copy_mb_char(line, typed);
-    if (expected_ch >= '0' && expected_ch < '9') {
+    if (expected_ch >= '0' && expected_ch <= '9') {
         return true;
     }
     return false;
