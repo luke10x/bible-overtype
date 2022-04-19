@@ -1,0 +1,17 @@
+version: "3.7"
+services:
+  builder:
+    #image: ubuntu
+    build:
+      context: .
+    volumes:
+      - "..:/testspace/bible-overtype"
+    working_dir: "/testspace/bible-overtype"
+    entrypoint: "/bin/bash -c"
+    command:
+      - |
+        pwd
+        ls -las
+        tail -f /dev/null  
+    ports:
+      - 3000:3000
