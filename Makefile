@@ -60,13 +60,11 @@ bible-xterm.html: libutf8proc.bc.o
 	  -s WASM=1 \
 	  -o bible-xterm.html \
 	  --preload-file usr/share/bible/ \
-	  --pre-js ../emcurses/emscripten/termlib.js \
-	  --shell-file ./wasm/shell-file-termlib.html
+      --preload-file ./wasm/terminfo@/home/web_user/.terminfo \
+	  --shell-file ./wasm/shell-file-xterm.html
 		
 # for xterm we likely need those (as in ilyaigpetrov/ncurses-for-emscripten)
-#-o bible-xterm.html \
 #--preload-file lib/terminfo@/home/web_user/.terminfo \
-#--shell-file ./min-shell.html
 
 # Based on rhaberkorn/emcurses
 bible-termlib.html:

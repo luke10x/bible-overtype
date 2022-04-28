@@ -5,11 +5,11 @@ WORKDIR /testspace
 
 #📌 NCurses based on jamesbiv/ncurses-fro-emscripten (not working)
 
-#RUN wget https://ftp.gnu.org/pub/gnu/ncurses/ncurses-6.1.tar.gz
-#RUN wget https://raw.githubusercontent.com/jamesbiv/ncurses-emscripten/master/ncurses-6.1_emscripten.patch
-#RUN apt-get install -y patch 
-#RUN tar -xzvf ncurses-6.1.tar.gz
-#RUN patch -p0 < ncurses-6.1_emscripten.patch
+RUN wget https://ftp.gnu.org/pub/gnu/ncurses/ncurses-6.1.tar.gz
+RUN wget https://raw.githubusercontent.com/jamesbiv/ncurses-emscripten/master/ncurses-6.1_emscripten.patch
+RUN apt-get install -y patch 
+RUN tar -xzvf ncurses-6.1.tar.gz
+RUN patch -p0 < ncurses-6.1_emscripten.patch
 
 
 #📌 Native ncurses (We don't need it now)
@@ -22,12 +22,13 @@ WORKDIR /testspace
 
 #📌 Emscripten ncurses (does not work)
 
-#WORKDIR /testspace/ncurses-6.1
-#RUN emconfigure ./configure --prefix=/testspace/ncurses-6.1/build
-#COPY /testspace/ncurses-overrides/Makefile /testspace/ncurses-6.1/Makefile
-#COPY /testspace/ncurses-overrides/ncurses/Makefile-emscripten /testspace/ncurses-6.1/ncurses/Makefile
-#RUN make clean
-#RUN emmake make && emmake make install
+WORKDIR /testspace/ncurses-6.1
+RUN emconfigure ./configure --prefix=/testspace/ncurses-6.1/build
+COPY ./ncurses-overrides/Makefile /testspace/ncurses-6.1/Makefile
+COPY ./ncurses-overrides/ncurses/Makefile /testspace/ncurses-6.1/ncurses/Makefile
+RUN make clean
+COPY ./lib /testspace/ncurses-6.1/lib
+RUN emmake make && emmake make install
 
 #📌 PDCurses based on rhaberkorn/emcurses (not working)
 
