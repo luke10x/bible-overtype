@@ -2,6 +2,7 @@
 /archive/bible
 /overtype
 /bible
+/ng/web/node_modules
 /obj
 /empty
 #bible.js

@@ -1,0 +1,14 @@
+{
+  "name": "bible-overtype-web",
+  "version": "1.0.0",
+  "description": "Web placeholder for bible-overtype app",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "xterm": "^5.0.0"
+  }
+}
