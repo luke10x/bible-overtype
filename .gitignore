@@ -3,6 +3,8 @@
 /overtype
 /bible
 /ng/web/node_modules
+/ng/src/*.wasm
+/ng/web/*.wasm
 /obj
 /empty
 #bible.js
